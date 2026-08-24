@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=1000" />
+<title>Relatório · Eventos Validados · Protótipo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  /* Exemplo de relatório — só pra visualização/discussão de layout, ainda não
+     ligado ao protótipo interativo. Um relatório desses existe por sub-aba de
+     Validados (Tabelas / Periódicos / Não Periódicos / Saúde e Segurança do
+     Trabalho / Advertências) — este arquivo mostra o de "Não Periódicos". */
+  :root {
+    --brand-pink: #f25461; --brand-pink-soft: #fde7ea;
+    --text-primary: #18181b; --text-secondary: #52525b; --text-tertiary: #a1a1aa;
+    --border: #e4e4e7; --surface-subtle: #fafafa; --success: #16a34a; --success-soft: #dcfce7;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: #eef0f2; font-family: 'Inter', system-ui, sans-serif; color: var(--text-primary); font-size: 13px; }
+  .page { max-width: 860px; margin: 32px auto; background: #fff; border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); padding: 40px 48px; }
+
+  .rel-topline { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 22px; padding-bottom: 18px; border-bottom: 2px solid var(--text-primary); }
+  .rel-brand { display: flex; align-items: center; gap: 10px; }
+  .rel-brand .mark { width: 32px; height: 32px; border-radius: 9px; background: var(--brand-pink); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px; }
+  .rel-brand .name { font-weight: 700; font-size: 15px; }
+  .rel-brand .sub { font-size: 11px; color: var(--text-tertiary); }
+  .rel-meta { text-align: right; font-size: 11.5px; color: var(--text-secondary); line-height: 1.6; }
+  .rel-meta b { color: var(--text-primary); }
+
+  .rel-title-row { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; flex-wrap: wrap; gap: 10px; }
+  .rel-eyebrow { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--brand-pink); margin-bottom: 4px; }
+  .rel-title { font-size: 20px; font-weight: 700; margin: 0; }
+  .rel-filtros { font-size: 11.5px; color: var(--text-secondary); background: var(--surface-subtle); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; }
+  .rel-filtros span { color: var(--text-primary); font-weight: 600; }
+
+  .rel-summary { display: flex; gap: 10px; margin-bottom: 26px; flex-wrap: wrap; }
+  .rel-stat { flex: 1; min-width: 130px; border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; }
+  .rel-stat .n { font-size: 20px; font-weight: 700; }
+  .rel-stat .l { font-size: 11px; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.04em; }
+
+  .rel-empresa { margin-top: 26px; }
+  .rel-empresa-head { display: flex; align-items: baseline; gap: 10px; padding-bottom: 8px; margin-bottom: 10px; border-bottom: 1px solid var(--border); }
+  .rel-empresa-head .nome { font-size: 13.5px; font-weight: 700; }
+  .rel-empresa-head .cnpj { font-size: 11.5px; color: var(--text-tertiary); font-family: 'JetBrains Mono', monospace; }
+  .rel-empresa-head .qtd { margin-left: auto; font-size: 11px; color: var(--text-tertiary); }
+
+  table.rel-table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
+  table.rel-table th { text-align: left; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-tertiary); padding: 7px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  table.rel-table td { padding: 8px 10px; border-bottom: 1px solid #f0f0f1; font-size: 12.5px; vertical-align: top; }
+  table.rel-table tr:last-child td { border-bottom: none; }
+  .mono { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; }
+  .rel-badge { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--success-soft); color: var(--success); }
+
+  .rel-footer { margin-top: 32px; padding-top: 14px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; font-size: 10.5px; color: var(--text-tertiary); }
+
+  @media print {
+    body { background: #fff; }
+    .page { box-shadow: none; border: none; margin: 0; max-width: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="page">
+    <div class="rel-topline">
+      <div class="rel-brand">
+        <div class="mark">C</div>
+        <div>
+          <div class="name">Cockpit</div>
+          <div class="sub">Painel de Monitoramento eSocial</div>
+        </div>
+      </div>
+      <div class="rel-meta">
+        <div>Emitido em <b>13/08/2026</b> às <b>14:32</b></div>
+        <div>Operador: <b>Daniele Ribeiro</b></div>
+        <div>Página <b>1</b> de <b>1</b></div>
+      </div>
+    </div>
+
+    <div class="rel-title-row">
+      <div>
+        <div class="rel-eyebrow">Relatório · Validados</div>
+        <h1 class="rel-title">Eventos Validados — Não Periódicos</h1>
+      </div>
+      <div class="rel-filtros">Período: <span>Mai/2026</span> · Empresa: <span>Todas</span> · Situação: <span>Todas</span></div>
+    </div>
+
+    <div class="rel-summary">
+      <div class="rel-stat"><div class="n">3</div><div class="l">Eventos no relatório</div></div>
+      <div class="rel-stat"><div class="n">3</div><div class="l">Aceitos com sucesso</div></div>
+      <div class="rel-stat"><div class="n">0</div><div class="l">Aceitos com advertência</div></div>
+      <div class="rel-stat"><div class="n">3</div><div class="l">Empresas distintas</div></div>
+    </div>
+
+    <div class="rel-empresa">
+      <div class="rel-empresa-head">
+        <span class="nome">Padaria São Luís Ltda</span>
+        <span class="cnpj">12.345.678/0001-90</span>
+        <span class="qtd">1 evento</span>
+      </div>
+      <table class="rel-table">
+        <thead><tr><th>Leiaute</th><th>Evento</th><th>Data de Envio</th><th>Situação</th><th>Nº Recibo</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="mono">S-2200</td>
+            <td>Admissão de Trabalhador</td>
+            <td>12/05/2026 · 10:22</td>
+            <td><span class="rel-badge">Aceito com sucesso</span></td>
+            <td class="mono">1.2.202608080001234567-89</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="rel-empresa">
+      <div class="rel-empresa-head">
+        <span class="nome">Transportes Rio Claro</span>
+        <span class="cnpj">56.789.012/0001-44</span>
+        <span class="qtd">1 evento</span>
+      </div>
+      <table class="rel-table">
+        <thead><tr><th>Leiaute</th><th>Evento</th><th>Data de Envio</th><th>Situação</th><th>Nº Recibo</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="mono">S-2299</td>
+            <td>Desligamento</td>
+            <td>12/05/2026 · 11:05</td>
+            <td><span class="rel-badge">Aceito com sucesso</span></td>
+            <td class="mono">1.2.202608080004455667-12</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="rel-empresa">
+      <div class="rel-empresa-head">
+        <span class="nome">Distribuidora Nova Era</span>
+        <span class="cnpj">67.890.123/0001-55</span>
+        <span class="qtd">1 evento</span>
+      </div>
+      <table class="rel-table">
+        <thead><tr><th>Leiaute</th><th>Evento</th><th>Data de Envio</th><th>Situação</th><th>Nº Recibo</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="mono">S-2230</td>
+            <td>Afastamento Temporário</td>
+            <td>11/05/2026 · 14:12</td>
+            <td><span class="rel-badge">Aceito com sucesso</span></td>
+            <td class="mono">1.2.202608070002233445-67</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="rel-footer">
+      <span>Cockpit · BHub — relatório gerado automaticamente a partir do Painel de Monitoramento eSocial</span>
+      <span>Protótipo · não usar para fins fiscais</span>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,1350 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=1280" />
+<title>Painel de Monitoramento eSocial · Protótipo</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   CSS específico da tela "Painel de Monitoramento eSocial".
+   Reaproveita tokens/classes do core (.section-card, .badge-*, .btn-*,
+   .flt-trigger/.flt-menu/.flt-item, .dt-*) — só o que é novo (abas,
+   grid de filtros, drawer lateral, toast) é definido aqui.
+   ============================================================ */
+#screen-esocial .container-wide { max-width: 1440px; margin: 0 auto; }
+.topbar { padding-left: 32px; border-bottom: 1px solid var(--border); background: #fff; }
+
+.esoc-tabs-wrap { margin-bottom: 16px; }
+.esoc-tabs { display: flex; flex-wrap: wrap; gap: 3px; background: var(--surface-muted); border: 1px solid var(--border); border-radius: 12px; padding: 4px; width: 100%; box-sizing: border-box; }
+.esoc-tab { padding: 7px 13px; border-radius: 8px; font-size: 12.5px; font-weight: 600; color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; gap: 6px; white-space: nowrap; transition: background .12s, color .12s; }
+.esoc-tab:hover { color: var(--text-primary); }
+.esoc-tab.active { background: #fff; color: var(--text-primary); box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+.esoc-tab .cnt { font-size: 10.5px; font-weight: 700; background: rgba(0,0,0,0.06); border-radius: 999px; padding: 1px 6px; color: var(--text-tertiary); min-width: 17px; text-align: center; }
+.esoc-tab.active .cnt { background: var(--brand-pink-soft); color: var(--brand-pink); }
+.esoc-tab.has-danger .cnt { background: var(--danger-soft); color: var(--danger); }
+.esoc-tab.active.has-danger .cnt { background: var(--brand-pink-soft); color: var(--brand-pink); }
+
+.esoc-filter-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px 18px; margin-bottom: 14px; }
+.esoc-field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.esoc-field label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-tertiary); }
+.esoc-input, .esoc-select { height: 36px; padding: 0 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; font-family: inherit; outline: none; background: #fff; color: var(--text-primary); width: 100%; box-sizing: border-box; }
+.esoc-input:focus, .esoc-select:focus { border-color: var(--brand-pink); box-shadow: 0 0 0 2px var(--brand-pink-soft); }
+.esoc-checks { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; height: 36px; }
+.esoc-check-item { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-primary); cursor: pointer; }
+.esoc-check-item input { accent-color: var(--brand-pink); width: 14px; height: 14px; cursor: pointer; }
+
+.esoc-ms .flt-trigger { width: 100%; box-sizing: border-box; justify-content: space-between; height: 36px; }
+.esoc-ms .flt-menu { min-width: 100%; }
+.esoc-ms { position: relative; }
+
+.esoc-subtabs { display: flex; flex-wrap: wrap; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 14px; }
+.esoc-subtab { padding: 9px 14px; font-size: 12.5px; font-weight: 600; color: var(--text-secondary); cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; }
+.esoc-subtab:hover { color: var(--text-primary); }
+.esoc-subtab.active { color: var(--brand-pink); border-bottom-color: var(--brand-pink); }
+
+.esoc-log-feed { display: flex; flex-direction: column; gap: 12px; }
+.esoc-log-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.esoc-log-card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 14px; background: var(--surface-subtle); border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.esoc-log-card-title { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+.esoc-log-card-sub { font-size: 11.5px; color: var(--text-tertiary); font-family: 'JetBrains Mono', monospace; }
+.esoc-log-box { background: #18181b; padding: 10px 14px; font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.9; max-height: 160px; overflow-y: auto; }
+.esoc-log-line { display: flex; gap: 10px; }
+.esoc-log-line .t { color: #71717a; flex-shrink: 0; }
+.esoc-log-line .m { color: #d4d4d8; }
+.esoc-log-line.warn .m { color: #fbbf24; }
+.esoc-log-line.err .m { color: #f87171; }
+.esoc-log-line.ok .m { color: #4ade80; }
+.esoc-log-cursor { display: inline-block; width: 6px; height: 12px; background: #d4d4d8; margin-left: 2px; animation: esocBlink 1s step-end infinite; vertical-align: -1px; }
+@keyframes esocBlink { 50% { opacity: 0; } }
+
+.esoc-suggestion { display: flex; gap: 10px; align-items: flex-start; background: var(--info-soft); border: 1px solid #bfdbfe; border-radius: 8px; padding: 12px 14px; margin-top: 12px; }
+.esoc-suggestion .lbl { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #1e40af; margin-bottom: 3px; }
+.esoc-suggestion .txt { font-size: 13px; color: #1e3a8a; line-height: 1.5; }
+
+.esoc-toolbar-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; padding-top: 12px; border-top: 1px solid var(--border); }
+.esoc-total { font-size: 12.5px; color: var(--text-secondary); }
+.esoc-total strong { color: var(--text-primary); }
+.esoc-toolbar-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.esoc-bulkbar { display: none; align-items: center; justify-content: space-between; background: var(--brand-pink-soft); border: 1px solid var(--brand-pink); border-radius: 10px; padding: 10px 14px; margin-bottom: 12px; font-size: 13px; color: var(--text-primary); }
+.esoc-bulkbar.show { display: flex; }
+.esoc-bulkbar .cnt-txt { font-weight: 600; }
+.esoc-bulkbar .acts { display: flex; gap: 8px; }
+
+.esoc-resumo-cell { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; cursor: help; }
+
+/* Sem scroll horizontal: layout fixo + larguras percentuais somando 100% +
+   cabeçalhos podem quebrar linha em vez de forçar coluna larga. */
+#screen-esocial .dt-scroll { overflow-x: hidden; }
+#screen-esocial .dt-table { table-layout: fixed; width: 100%; }
+#screen-esocial .dt-table th { white-space: normal; word-break: break-word; line-height: 1.3; }
+#screen-esocial .dt-table td { word-break: break-word; }
+#screen-esocial #dt-esoc-eventos .dt-table th:nth-child(1), #screen-esocial #dt-esoc-eventos .dt-table td:nth-child(1) { width: 3%; }
+#screen-esocial #dt-esoc-eventos .dt-table th:nth-child(2), #screen-esocial #dt-esoc-eventos .dt-table td:nth-child(2) { width: 13%; }
+#screen-esocial #dt-esoc-eventos .dt-table th:nth-child(3), #screen-esocial #dt-esoc-eventos .dt-table td:nth-child(3) { width: 9%; }
+#screen-esocial #dt-esoc-eventos .dt-table th:nth-child(4), #screen-esocial #dt-esoc-eventos .dt-table td:nth-child(4) { width: 14%; }
+#screen-esocial #dt-esoc-eventos .dt-table th:nth-child(5), #screen-esocial #dt-esoc-eventos .dt-table td:nth-child(5) { width: 11%; }
+#screen-esocial #dt-esoc-eventos .dt-table th:nth-child(6), #screen-esocial #dt-esoc-eventos .dt-table td:nth-child(6) { width: 15%; }
+#screen-esocial #dt-esoc-eventos .dt-table th:nth-child(7), #screen-esocial #dt-esoc-eventos .dt-table td:nth-child(7) { width: 9%; }
+#screen-esocial #dt-esoc-eventos .dt-table th:nth-child(8), #screen-esocial #dt-esoc-eventos .dt-table td:nth-child(8) { width: 15%; }
+#screen-esocial #dt-esoc-eventos .dt-table th:nth-child(9), #screen-esocial #dt-esoc-eventos .dt-table td:nth-child(9) { width: 11%; }
+#screen-esocial #dt-esoc-xml .dt-table th:nth-child(1), #screen-esocial #dt-esoc-xml .dt-table td:nth-child(1) { width: 28%; }
+#screen-esocial #dt-esoc-xml .dt-table th:nth-child(2), #screen-esocial #dt-esoc-xml .dt-table td:nth-child(2) { width: 22%; }
+#screen-esocial #dt-esoc-xml .dt-table th:nth-child(3), #screen-esocial #dt-esoc-xml .dt-table td:nth-child(3) { width: 22%; }
+#screen-esocial #dt-esoc-xml .dt-table th:nth-child(4), #screen-esocial #dt-esoc-xml .dt-table td:nth-child(4) { width: 18%; }
+#screen-esocial #dt-esoc-xml .dt-table th:nth-child(5), #screen-esocial #dt-esoc-xml .dt-table td:nth-child(5) { width: 10%; }
+#screen-esocial .dt-search-wrap { max-width: 260px; }
+.esoc-retorno-link { color: var(--brand-blue); cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+.esoc-retorno-link:hover { color: var(--brand-pink); }
+.esoc-checkbox-disabled { opacity: 0.35; cursor: not-allowed; }
+.esoc-leiaute-code { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text-primary); font-weight: 600; }
+.esoc-leiaute-desc { font-size: 11px; color: var(--text-tertiary); }
+
+/* Drawer lateral — padrão do cockpit para painéis com ação/edição */
+.esoc-drawer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.25); z-index: 40; opacity: 0; pointer-events: none; transition: opacity .2s; }
+.esoc-drawer-overlay.open { opacity: 1; pointer-events: auto; }
+.esoc-drawer { position: fixed; top: 0; right: 0; height: 100%; width: 560px; max-width: 92vw; background: var(--surface); border-left: 1px solid var(--border); z-index: 50; display: flex; flex-direction: column; transform: translateX(100%); transition: transform .25s cubic-bezier(.25,.46,.45,.94); }
+.esoc-drawer.open { transform: translateX(0); }
+.esoc-drawer-header { padding: 16px 20px; border-bottom: 1px solid var(--border); flex-shrink: 0; display: flex; align-items: flex-start; gap: 12px; }
+.esoc-drawer-title { font-size: 15px; font-weight: 700; color: var(--text-primary); line-height: 1.3; }
+.esoc-drawer-sub { font-size: 12.5px; color: var(--text-secondary); margin-top: 3px; }
+.esoc-drawer-body { flex: 1; overflow-y: auto; padding: 16px 20px; display: flex; flex-direction: column; gap: 16px; }
+.esoc-drawer-footer { padding: 14px 20px; border-top: 1px solid var(--border); display: flex; align-items: center; gap: 8px; flex-shrink: 0; background: var(--surface); flex-wrap: wrap; }
+.esoc-drawer-block { background: var(--surface-subtle); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+.esoc-drawer-block-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--brand-pink); display: flex; align-items: center; gap: 6px; margin-bottom: 10px; }
+.esoc-drawer-block.err .esoc-drawer-block-title { color: var(--danger); }
+.esoc-kv-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; }
+.esoc-kv-grid.one-col { grid-template-columns: 1fr; }
+.esoc-kv label { display: block; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-tertiary); margin-bottom: 2px; }
+.esoc-kv .val { font-size: 13px; color: var(--text-primary); word-break: break-word; }
+.esoc-kv .val.mono { font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+.esoc-kv .val.empty { color: var(--text-tertiary); font-style: italic; }
+.esoc-copy-btn { font-size: 11.5px; color: var(--brand-blue); background: none; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; padding: 0; margin-top: 4px; }
+.esoc-copy-btn:hover { text-decoration: underline; }
+.esoc-xml-box { background: #18181b; color: #d4d4d8; border-radius: 8px; padding: 12px 14px; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; line-height: 1.6; max-height: 260px; overflow: auto; white-space: pre-wrap; word-break: break-all; }
+.esoc-xml-search { margin-bottom: 8px; }
+.esoc-generic-warning { display: flex; gap: 8px; align-items: flex-start; background: var(--warning-soft); border: 1px solid #fde68a; border-radius: 8px; padding: 10px 12px; font-size: 12.5px; color: #92400e; margin-top: 10px; }
+.esoc-elig-note { font-size: 11.5px; color: var(--text-tertiary); margin-top: 8px; display: flex; align-items: center; gap: 5px; }
+
+.esoc-toast-wrap { position: fixed; bottom: 24px; right: 24px; z-index: 80; display: flex; flex-direction: column; gap: 8px; }
+.esoc-toast { background: #fff; border: 1px solid var(--border); border-left: 4px solid var(--text-tertiary); border-radius: 8px; padding: 10px 14px; font-size: 13px; box-shadow: 0 6px 20px rgba(0,0,0,0.12); min-width: 260px; display: flex; align-items: center; gap: 8px; }
+.esoc-toast.success { border-left-color: var(--success); }
+.esoc-toast.warning { border-left-color: var(--warning); }
+.esoc-toast.danger { border-left-color: var(--danger); }
+</style>
+</head>
+<body>
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   window.FLOW_CONFIG — módulo DP. Esta tela não faz parte do fluxo
+   fila → validação → execução → sucesso (é um painel de monitoramento
+   próprio), então o shell é usado só para sidebar/topbar; a home/fila
+   padrão do core fica oculta e substituída pela tela #screen-esocial
+   (montada em initPainelEsocial(), chamado após o boot do core — ver
+   o <script> no fim do <body>).
+   ═══════════════════════════════════════════════════════════════ */
+window.FLOW_CONFIG = {
+  module: 'dp',
+  moduleOverrides: {
+    activeLabel: 'Painel eSocial',
+    activeIcon: 'radar',
+    activeHref: 'javascript:void(0)',
+  },
+  entryScreen: 'queue',
+  operacaoLabel: 'Acompanhamento de Eventos eSocial',
+  typeCode: 'acompanhamento_esocial',
+  TYPE_METADATA: {
+    acompanhamento_esocial: { icon: 'radar', label: 'Acompanhamento eSocial', desc: 'Monitoramento de eventos enviados ao eSocial', color: '#f25461' },
+  },
+  getInitialState() { return { queue: [] }; },
+};
+
+/* ═══════════════════════════════════════════════════════════════
+   DADOS MOCK
+   ═══════════════════════════════════════════════════════════════ */
+const EMPRESAS_ESOC = [
+  { nome: 'Padaria São Luís Ltda', cnpj: '12.345.678/0001-90' },
+  { nome: 'Grupo Alvorada Comércio', cnpj: '23.456.789/0001-11' },
+  { nome: 'Metalúrgica Boa Vista', cnpj: '34.567.890/0001-22' },
+  { nome: 'Clínica Vitalis', cnpj: '45.678.901/0001-33' },
+  { nome: 'Transportes Rio Claro', cnpj: '56.789.012/0001-44' },
+  { nome: 'Distribuidora Nova Era', cnpj: '67.890.123/0001-55' },
+];
+const COLABS_ESOC = [
+  { nome: 'Marina Alves Ferreira', cpf: '123.456.789-01' },
+  { nome: 'João Pedro Souza', cpf: '234.567.890-12' },
+  { nome: 'Camila Ribeiro Dias', cpf: '345.678.901-23' },
+  { nome: 'Rafael Nogueira Lima', cpf: '456.789.012-34' },
+  { nome: 'Beatriz Costa Martins', cpf: '567.890.123-45' },
+];
+const LEIAUTES_ESOC = {
+  'S-1005': { desc: 'Tabela de Estabelecimentos, Obras ou Unidades', classe: 'tabela' },
+  'S-1200': { desc: 'Remuneração de Trabalhador', classe: 'periodico' },
+  'S-1210': { desc: 'Pagamentos de Rendimentos do Trabalho', classe: 'periodico' },
+  'S-2200': { desc: 'Admissão de Trabalhador', classe: 'nao_periodico' },
+  'S-2206': { desc: 'Alteração de Contrato de Trabalho', classe: 'nao_periodico' },
+  'S-2230': { desc: 'Afastamento Temporário', classe: 'nao_periodico' },
+  'S-2299': { desc: 'Desligamento', classe: 'nao_periodico' },
+  'S-2210': { desc: 'Comunicação de Acidente de Trabalho', classe: 'sst' },
+};
+
+function _mkEv(o) { return Object.assign({ recibo: '', cpfColaborador: '', erro: null }, o); }
+const EVENTOS_ESOC = [
+  // ── Em Processamento (aguardando retorno do eSocial) ──
+  _mkEv({ id: 'EV-88010', tab: 'processamento', status: 'aguardando_retorno', leiaute: 'S-2200', empresa: 0, colab: 0, diasAtras: 0, hora: '08:12', situacao: 'Enviado, aguardando retorno do eSocial', retorno: '', resumo: 'Lote enviado ao ambiente de produção do eSocial.' }),
+  _mkEv({ id: 'EV-88011', tab: 'processamento', status: 'aguardando_retorno', leiaute: 'S-1200', empresa: 1, colab: null, diasAtras: 0, hora: '08:15', situacao: 'Enviado, aguardando retorno do eSocial', retorno: '', resumo: 'Lote de remuneração enviado, aguardando processamento.' }),
+  _mkEv({ id: 'EV-88012', tab: 'processamento', status: 'aguardando_retorno', leiaute: 'S-2206', empresa: 2, colab: 2, diasAtras: 1, hora: '17:40', situacao: 'Enviado, aguardando retorno do eSocial', retorno: '', resumo: 'Alteração contratual enviada, aguardando retorno.' }),
+  _mkEv({ id: 'EV-88013', tab: 'processamento', status: 'aguardando_retorno', leiaute: 'S-1005', empresa: 3, colab: null, diasAtras: 1, hora: '09:02', situacao: 'Enviado, aguardando retorno do eSocial', retorno: '', resumo: 'Tabela de estabelecimento enviada.' }),
+  _mkEv({ id: 'EV-88014', tab: 'processamento', status: 'aguardando_retorno', leiaute: 'S-1200', empresa: 5, colab: null, diasAtras: 0, hora: '08:40', situacao: 'Aguardando confirmação — possível divergência com o eSocial', retorno: '', resumo: 'Autopilot não conseguiu confirmar automaticamente se a competência já está aberta no eSocial.',
+    divergenciaAsync: true }),
+
+  // ── Validados ──
+  _mkEv({ id: 'EV-87990', tab: 'validados', status: 'sucesso', leiaute: 'S-2200', empresa: 0, colab: 1, diasAtras: 2, hora: '10:22', situacao: 'Aceito com sucesso', retorno: 'Evento processado e aceito pelo eSocial sem inconsistências.', resumo: 'Admissão aceita com sucesso.', recibo: '1.2.202608080001234567-89' }),
+  _mkEv({ id: 'EV-87991', tab: 'validados', status: 'sucesso', leiaute: 'S-2299', empresa: 4, colab: 3, diasAtras: 2, hora: '11:05', situacao: 'Aceito com sucesso', retorno: 'Evento de desligamento processado e aceito pelo eSocial.', resumo: 'Desligamento aceito com sucesso.', recibo: '1.2.202608080004455667-12' }),
+  _mkEv({ id: 'EV-87992', tab: 'validados', status: 'sucesso_advertencia', leiaute: 'S-1200', empresa: 1, colab: null, diasAtras: 2, hora: '11:40', situacao: 'Aceito com advertência', retorno: 'Evento aceito, porém com advertência: valores de FGTS próximos ao limite de tolerância.', resumo: 'Remuneração aceita com advertência de FGTS.', recibo: '1.2.202608080009988776-34' }),
+  _mkEv({ id: 'EV-87993', tab: 'validados', status: 'sucesso', leiaute: 'S-2230', empresa: 5, colab: 4, diasAtras: 3, hora: '14:12', situacao: 'Aceito com sucesso', retorno: 'Evento de afastamento processado e aceito pelo eSocial.', resumo: 'Afastamento temporário aceito.', recibo: '1.2.202608070002233445-67' }),
+  _mkEv({ id: 'EV-87994', tab: 'validados', status: 'sucesso', leiaute: 'S-1210', empresa: 2, colab: null, diasAtras: 3, hora: '15:30', situacao: 'Aceito com sucesso', retorno: 'Evento de pagamento processado e aceito pelo eSocial.', resumo: 'Pagamento de rendimentos aceito.', recibo: '1.2.202608070007766554-90' }),
+  _mkEv({ id: 'EV-87995', tab: 'validados', status: 'sucesso', leiaute: 'S-2210', empresa: 3, colab: 1, diasAtras: 0, hora: '09:40', situacao: 'Aceito com sucesso', retorno: 'Evento de comunicação de acidente de trabalho processado e aceito pelo eSocial.', resumo: 'CAT aceita com sucesso.', recibo: '1.2.202608100003321445-21' }),
+  _mkEv({ id: 'EV-87996', tab: 'validados', status: 'sucesso', leiaute: 'S-1005', empresa: 4, colab: null, diasAtras: 5, hora: '08:10', situacao: 'Aceito com sucesso', retorno: 'Tabela de estabelecimento processada e aceita pelo eSocial.', resumo: 'Tabela aceita com sucesso.', recibo: '1.2.202608050001112233-45' }),
+
+  // ── Invalidados (erro de validação) ──
+  _mkEv({ id: 'EV-87950', tab: 'invalidados', status: 'erro', leiaute: 'S-2200', empresa: 0, colab: 2, diasAtras: 1, hora: '09:18', situacao: 'Rejeitado - erro de validação de schema', retorno: 'O evento não passou na validação de schema do XML.', resumo: 'Rejeitado por erro de schema XML.',
+    erro: { codigo: 'MSG-018', mensagem: 'Falha na validação do schema XML do evento', tipo: 'Erro', mensagemCompleta: 'O conteúdo do evento não está de acordo com o schema XSD definido pelo leiaute S-2200 versão S-1.1. Verifique a estrutura e os tipos de dados enviados no XML.', ocorrencia: '1 de 1', localizacao: '' } }),
+  _mkEv({ id: 'EV-87951', tab: 'invalidados', status: 'erro', leiaute: 'S-2206', empresa: 3, colab: 0, diasAtras: 1, hora: '13:44', situacao: 'Rejeitado - erro de validação de regra de negócio', retorno: 'O evento violou uma regra de negócio do eSocial.', resumo: 'Rejeitado por regra de negócio - data retroativa não permitida.',
+    erro: { codigo: 'MSG-1220', mensagem: 'Data de alteração anterior à data de admissão', tipo: 'Erro', mensagemCompleta: 'A data informada para o evento de alteração contratual é anterior à data de admissão do trabalhador registrada no eSocial. Corrija a data e reenvie.', ocorrencia: '1 de 1', localizacao: 'evento.altContratual.dtAlteracao' } }),
+  _mkEv({ id: 'EV-87952', tab: 'invalidados', status: 'erro', leiaute: 'S-2299', empresa: 5, colab: 4, diasAtras: 2, hora: '16:02', situacao: 'Rejeitado - erro de validação de regra de negócio', retorno: 'O evento violou uma regra de negócio do eSocial.', resumo: 'Rejeitado - trabalhador sem vínculo ativo.',
+    erro: { codigo: 'MSG-1301', mensagem: 'Trabalhador não possui vínculo ativo para desligamento', tipo: 'Erro', mensagemCompleta: 'Não foi possível processar o desligamento pois o trabalhador informado não possui um vínculo ativo correspondente na base do eSocial.', ocorrencia: '1 de 1', localizacao: 'evento.desligamento.cpfTrab' } }),
+  _mkEv({ id: 'EV-87953', tab: 'invalidados', status: 'erro', leiaute: 'S-2200', empresa: 1, colab: 3, diasAtras: 3, hora: '08:55', situacao: 'Rejeitado - erro de validação de schema', retorno: 'O evento não passou na validação de schema do XML.', resumo: 'Rejeitado por erro de schema XML.',
+    erro: { codigo: 'MSG-018', mensagem: 'Falha na validação do schema XML do evento', tipo: 'Erro', mensagemCompleta: 'O conteúdo do evento não está de acordo com o schema XSD definido. Consulte o conteúdo do XML para identificar o campo com formatação inválida.', ocorrencia: '1 de 2', localizacao: '' } }),
+
+  // ── Duplicados ──
+  _mkEv({ id: 'EV-87920', tab: 'duplicados', status: 'erro', leiaute: 'S-2200', empresa: 2, colab: 1, diasAtras: 2, hora: '10:10', situacao: 'Duplicidade detectada', retorno: 'Já existe um evento com o mesmo identificador processado anteriormente.', resumo: 'Evento duplicado - identificador já processado.',
+    erro: { codigo: 'MSG-045', mensagem: 'Evento duplicado - já existe evento com mesmo identificador', tipo: 'Pendência', mensagemCompleta: 'Foi identificado um evento anteriormente aceito pelo eSocial com o mesmo identificador (ideEvento). Verifique se o envio atual é realmente necessário antes de reenviar.', ocorrencia: '1 de 1', localizacao: '' } }),
+  _mkEv({ id: 'EV-87921', tab: 'duplicados', status: 'erro', leiaute: 'S-1200', empresa: 4, colab: null, diasAtras: 3, hora: '12:34', situacao: 'Duplicidade detectada', retorno: 'Já existe um evento com o mesmo identificador processado anteriormente.', resumo: 'Evento de remuneração duplicado.',
+    erro: { codigo: 'MSG-045', mensagem: 'Evento duplicado - já existe evento com mesmo identificador', tipo: 'Pendência', mensagemCompleta: 'O período de apuração informado já possui um evento S-1200 aceito para este trabalhador. Confirme se é necessária uma retificação em vez de um novo envio.', ocorrencia: '1 de 1', localizacao: '' } }),
+  _mkEv({ id: 'EV-87922', tab: 'duplicados', status: 'cancelado', leiaute: 'S-2206', empresa: 0, colab: 2, diasAtras: 4, hora: '09:48', situacao: 'Envio cancelado após duplicidade', retorno: 'Envio cancelado manualmente após identificação de duplicidade.', resumo: 'Envio cancelado pelo operador.',
+    erro: { codigo: 'MSG-045', mensagem: 'Evento duplicado - já existe evento com mesmo identificador', tipo: 'Pendência', mensagemCompleta: 'Evento cancelado pelo operador após confirmação de que o registro já havia sido processado anteriormente.', ocorrencia: '1 de 1', localizacao: '' } }),
+
+  // ── Erros de Preenchimento ──
+  _mkEv({ id: 'EV-87900', tab: 'erros_preenchimento', status: 'erro', leiaute: 'S-2200', empresa: 1, colab: 3, diasAtras: 1, hora: '14:20', situacao: 'Erro de preenchimento de campo', retorno: 'Um ou mais campos do formulário possuem valores inválidos.', resumo: 'Data de nascimento inválida.',
+    erro: { codigo: 'MSG-062', mensagem: 'Data de nascimento inválida ou incompatível com a idade mínima', tipo: 'Erro', mensagemCompleta: 'A data de nascimento informada resulta em idade inferior ao mínimo legal permitido para admissão. Corrija o campo e reenvie o evento.', ocorrencia: '1 de 1', localizacao: 'evento.trabalhador.nascimento.dtNascto' } }),
+  _mkEv({ id: 'EV-87901', tab: 'erros_preenchimento', status: 'erro', leiaute: 'S-2206', empresa: 3, colab: 4, diasAtras: 2, hora: '10:55', situacao: 'Erro de preenchimento de campo', retorno: 'Um ou mais campos do formulário possuem valores inválidos.', resumo: 'CBO informado não existe na tabela.',
+    erro: { codigo: 'MSG-071', mensagem: 'Código CBO informado não consta na tabela do eSocial', tipo: 'Erro', mensagemCompleta: 'O código de Classificação Brasileira de Ocupações (CBO) informado não foi encontrado na tabela vigente. Verifique o código no campo de cargo.', ocorrencia: '1 de 1', localizacao: 'evento.vinculo.cargo.codCBO' } }),
+  _mkEv({ id: 'EV-87902', tab: 'erros_preenchimento', status: 'erro', leiaute: 'S-1210', empresa: 5, colab: null, diasAtras: 3, hora: '16:15', situacao: 'Erro de preenchimento de campo', retorno: 'Um ou mais campos do formulário possuem valores inválidos.', resumo: 'Valor de rendimento negativo.',
+    erro: { codigo: 'MSG-088', mensagem: 'Valor de rendimento não pode ser negativo', tipo: 'Erro', mensagemCompleta: 'O campo de valor de rendimento pago foi preenchido com um número negativo, o que não é permitido pelo leiaute. Corrija o valor e reenvie.', ocorrencia: '1 de 1', localizacao: 'evento.pagamento.vrLiq' } }),
+  _mkEv({ id: 'EV-87903', tab: 'erros_preenchimento', status: 'erro', leiaute: 'S-1200', empresa: 0, colab: 0, diasAtras: 0, hora: '08:20', situacao: 'Erro de preenchimento de campo', retorno: 'Um ou mais campos do formulário possuem valores inválidos.', resumo: 'CBO inválido no evento de remuneração.',
+    erro: { codigo: '301', mensagem: 'CBO inválido', tipo: 'Erro', mensagemCompleta: 'O código de Classificação Brasileira de Ocupações (CBO) informado no evento de remuneração (S-1200) é inválido para o colaborador Marina Alves (matrícula 0048). Corrija o cadastro do colaborador ou o CBO informado e reenvie o evento.', ocorrencia: '1 de 1', localizacao: 'evento.remuneracao.cargo.codCBO' } }),
+
+  // ── Erros de Lote ──
+  _mkEv({ id: 'EV-87880', tab: 'erros_lote', status: 'erro', leiaute: 'S-2200', empresa: 2, colab: 0, diasAtras: 1, hora: '07:30', situacao: 'Erro no processamento do lote XML-2026-08-09-003', retorno: 'O lote inteiro foi rejeitado pelo eSocial antes da análise individual dos eventos.', resumo: 'Lote rejeitado - erro de assinatura digital do lote.',
+    erro: { codigo: 'MSG-005', mensagem: 'Falha na assinatura digital do lote de envio', tipo: 'Erro', mensagemCompleta: 'O lote XML enviado não pôde ser validado pois a assinatura digital não corresponde ao certificado do transmissor. Verifique o certificado usado na transmissão.', ocorrencia: '1 de 1', localizacao: '' } }),
+  _mkEv({ id: 'EV-87881', tab: 'erros_lote', status: 'erro', leiaute: 'S-1200', empresa: 4, colab: null, diasAtras: 2, hora: '13:02', situacao: 'Erro no processamento do lote XML-2026-08-08-011', retorno: 'O lote inteiro foi rejeitado pelo eSocial antes da análise individual dos eventos.', resumo: 'Lote rejeitado - limite de eventos por lote excedido.',
+    erro: { codigo: 'MSG-011', mensagem: 'Quantidade de eventos no lote excede o limite permitido', tipo: 'Erro', mensagemCompleta: 'O lote enviado excedeu o limite máximo de eventos por envio definido pelo eSocial. Divida o envio em lotes menores.', ocorrencia: '1 de 1', localizacao: '' } }),
+  _mkEv({ id: 'EV-87882', tab: 'erros_lote', status: 'aguardando_envio', leiaute: 'S-2299', empresa: 0, colab: 1, diasAtras: 2, hora: '15:47', situacao: 'Aguardando reenvio após erro de lote', retorno: 'Evento retirado do lote com erro e pendente de reenvio individual.', resumo: 'Pendente de reenvio após falha do lote original.',
+    erro: { codigo: 'MSG-011', mensagem: 'Quantidade de eventos no lote excede o limite permitido', tipo: 'Erro', mensagemCompleta: 'Este evento fazia parte de um lote rejeitado por excesso de eventos. Está pronto para ser reenviado individualmente ou em um novo lote menor.', ocorrencia: '1 de 1', localizacao: '' } }),
+
+  // ── Múltiplos Vínculos ──
+  _mkEv({ id: 'EV-87860', tab: 'multiplos_vinculos', status: 'erro', leiaute: 'S-2200', empresa: 1, colab: 2, diasAtras: 3, hora: '11:22', situacao: 'Inconsistência de vínculo', retorno: 'O trabalhador já possui vínculo ativo incompatível com o novo evento.', resumo: 'Trabalhador possui vínculo ativo incompatível.',
+    erro: { codigo: 'MSG-230', mensagem: 'Trabalhador possui múltiplo vínculo ativo incompatível com a categoria informada', tipo: 'Pendência', mensagemCompleta: 'O CPF informado já possui um vínculo empregatício ativo em outro empregador com categoria incompatível com a admissão atual. Confirme com o RH antes de reenviar.', ocorrencia: '1 de 1', localizacao: 'evento.vinculo.categoria' } }),
+  _mkEv({ id: 'EV-87861', tab: 'multiplos_vinculos', status: 'erro', leiaute: 'S-2206', empresa: 3, colab: 3, diasAtras: 4, hora: '09:05', situacao: 'Inconsistência de vínculo', retorno: 'O trabalhador já possui vínculo ativo incompatível com o novo evento.', resumo: 'Inconsistência entre matrículas do mesmo trabalhador.',
+    erro: { codigo: 'MSG-231', mensagem: 'Matrícula informada não corresponde ao vínculo ativo do trabalhador', tipo: 'Pendência', mensagemCompleta: 'A matrícula informada no evento não corresponde à matrícula do vínculo ativo mais recente cadastrado para este trabalhador no eSocial.', ocorrencia: '1 de 1', localizacao: 'evento.vinculo.matricula' } }),
+
+  // ── Certificado A3 ──
+  _mkEv({ id: 'EV-87840', tab: 'certificado_a3', status: 'erro', leiaute: 'S-2200', empresa: 5, colab: 4, diasAtras: 0, hora: '08:03', situacao: 'Falha de certificado digital A3', retorno: 'Não foi possível assinar o envio com o certificado digital configurado.', resumo: 'Falha ao acessar certificado A3 - token não encontrado.',
+    erro: { codigo: 'MSG-CERT-01', mensagem: 'Falha ao acessar certificado digital A3 - token não encontrado', tipo: 'Erro', mensagemCompleta: 'O serviço de transmissão não conseguiu localizar o token/smartcard do certificado A3 configurado para esta empresa. Verifique se o dispositivo está conectado e reenvie.', ocorrencia: '1 de 1', localizacao: '' } }),
+  _mkEv({ id: 'EV-87841', tab: 'certificado_a3', status: 'cancelado', leiaute: 'S-1200', empresa: 2, colab: null, diasAtras: 1, hora: '17:10', situacao: 'Envio cancelado - certificado A3 vencido', retorno: 'Envio cancelado devido a certificado digital vencido.', resumo: 'Certificado A3 vencido - aguardando renovação.',
+    erro: { codigo: 'MSG-CERT-02', mensagem: 'Certificado digital A3 vencido', tipo: 'Erro', mensagemCompleta: 'O certificado digital A3 utilizado pela empresa está com validade expirada. O envio foi cancelado até a renovação do certificado junto à autoridade certificadora.', ocorrencia: '1 de 1', localizacao: '' } }),
+];
+
+// ── Criação de XMLs (etapa anterior ao envio — escopo ainda em levantamento, DP-326) ──
+// Mostra a fila de processamento "ao vivo": cada card revela suas linhas de log
+// aos poucos (ver startXmlLogLoopEsoc), simulando o que está acontecendo agora.
+const XML_LOGS_ESOC = [
+  { id: 'XML-4401', empresa: 0, colab: 0, leiaute: 'S-2200', diasAtras: 0, script: [
+    { t: '08:00:01', msg: 'Montando XML do evento...', lvl: 'info' },
+    { t: '08:00:02', msg: 'Validação de schema local: OK', lvl: 'info' },
+    { t: '08:00:03', msg: 'Enviando para o eSocial...', lvl: 'info' },
+    { t: '08:00:06', msg: 'Realizando validação dos dados do XML...', lvl: 'info' },
+    { t: '08:00:09', msg: 'Evento aceito com sucesso.', lvl: 'ok' },
+  ]},
+  { id: 'XML-4402', empresa: 1, colab: null, leiaute: 'S-1200', diasAtras: 0, script: [
+    { t: '08:05:01', msg: 'Montando XML do evento...', lvl: 'info' },
+    { t: '08:05:02', msg: 'Validação de schema local: OK', lvl: 'info' },
+    { t: '08:05:03', msg: 'Enviando para o eSocial...', lvl: 'info' },
+    { t: '08:05:07', msg: 'Transmissão falhou.', lvl: 'err' },
+    { t: '08:05:07', msg: 'Tentando novamente em 30 segundos...', lvl: 'warn' },
+  ]},
+  { id: 'XML-4403', empresa: 2, colab: 2, leiaute: 'S-2206', diasAtras: 0, script: [
+    { t: '07:58:01', msg: 'Montando XML do evento...', lvl: 'info' },
+    { t: '07:58:02', msg: 'Validação de schema local: falhou — campo obrigatório ausente.', lvl: 'err' },
+    { t: '07:58:02', msg: 'Geração interrompida. Evento movido para revisão manual.', lvl: 'err' },
+  ]},
+  { id: 'XML-4404', empresa: 3, colab: 3, leiaute: 'S-2299', diasAtras: 1, script: [
+    { t: '18:20:01', msg: 'Montando XML do evento...', lvl: 'info' },
+    { t: '18:20:02', msg: 'Validação de schema local: OK', lvl: 'info' },
+    { t: '18:20:03', msg: 'Pronto para envio — aguardando janela de transmissão.', lvl: 'info' },
+  ]},
+  { id: 'XML-4405', empresa: 4, colab: null, leiaute: 'S-1210', diasAtras: 1, script: [
+    { t: '18:25:01', msg: 'Na fila — aguardando geração.', lvl: 'info' },
+  ]},
+  { id: 'XML-4406', empresa: 5, colab: 4, leiaute: 'S-2230', diasAtras: 1, script: [
+    { t: '19:00:01', msg: 'Montando XML do evento...', lvl: 'info' },
+    { t: '19:00:02', msg: 'Enviando para o eSocial...', lvl: 'info' },
+    { t: '19:00:05', msg: 'Realizando validação dos dados do XML...', lvl: 'info' },
+    { t: '19:00:08', msg: 'Enviado à fila de transmissão.', lvl: 'ok' },
+  ]},
+];
+const ESOC_XML_REVEAL = {};
+let _esocXmlLogTimer = null;
+
+const TABS_ESOC = [
+  { id: 'processamento', label: 'Em Processamento' },
+  { id: 'validados', label: 'Validados' },
+  { id: 'invalidados', label: 'Invalidados' },
+  { id: 'duplicados', label: 'Duplicados' },
+  { id: 'erros_preenchimento', label: 'Erros de Preenchimento' },
+  { id: 'erros_lote', label: 'Erros de Lote' },
+  { id: 'multiplos_vinculos', label: 'Múltiplos Vínculos' },
+  { id: 'certificado_a3', label: 'Certificado A3' },
+  { id: 'criacao_xmls', label: 'Criação de XMLs' },
+];
+const ERROR_TABS_ESOC = ['invalidados', 'duplicados', 'erros_preenchimento', 'erros_lote', 'multiplos_vinculos', 'certificado_a3'];
+
+// Sub-abas exibidas só dentro da aba "Validados" (referência: Painel de Validados
+// do Domínio). "Advertências" não é uma classificação de leiaute — filtra por
+// status sucesso_advertencia.
+const VALIDADOS_SUBTABS_ESOC = [
+  { id: 'tabela', label: 'Tabelas' },
+  { id: 'periodico', label: 'Periódicos' },
+  { id: 'nao_periodico', label: 'Não Periódicos' },
+  { id: 'sst', label: 'Saúde e Segurança do Trabalho' },
+  { id: 'advertencias', label: 'Advertências' },
+];
+let ESOC_VALIDADOS_SUB = 'tabela';
+
+const STATUS_META_ESOC = {
+  aguardando_envio:   { label: 'Aguardando envio',        badge: 'warning' },
+  aguardando_retorno: { label: 'Aguardando retorno',      badge: 'warning' },
+  sucesso:            { label: 'Aceito com sucesso',      badge: 'success' },
+  sucesso_advertencia:{ label: 'Aceito com advertência',  badge: 'success' },
+  erro:               { label: 'Erro retornado',          badge: 'danger'  },
+  cancelado:          { label: 'Envio cancelado',          badge: 'neutral' },
+};
+
+/* ═══════════════════════════════════════════════════════════════
+   ESTADO
+   ═══════════════════════════════════════════════════════════════ */
+let ESOC_ACTIVE_TAB = 'processamento';
+const ESOC_SELECTED = new Set();
+const ESOC_FILTERS = {
+  empresas: new Set(), leiautes: new Set(), situacoes: new Set(),
+  cnpjEmpregador: '', cpfColaborador: '', busca: '', competenciaDe: '', competenciaAte: '',
+  ordenarPor: 'status', reciboInformado: 'todos',
+};
+
+/* ═══════════════════════════════════════════════════════════════
+   HELPERS DE DADOS
+   ═══════════════════════════════════════════════════════════════ */
+function empEsoc(idx) { return EMPRESAS_ESOC[idx] || { nome: '—', cnpj: '' }; }
+function colabEsoc(idx) { return idx == null ? null : COLABS_ESOC[idx]; }
+function elegivelReenvioEsoc(ev) { return ['erro', 'aguardando_envio', 'cancelado'].includes(ev.status); }
+function elegivelCancelamentoEsoc(ev) { return ev.status === 'aguardando_envio'; }
+function eventosDoTabEsoc(tab) { return EVENTOS_ESOC.filter(e => e.tab === tab); }
+
+// Filtro de competência (mês/ano), não período livre — ex. "Mai/2026".
+// diasAtras + MOCK_TODAY (core) dão a data real do evento; competência é só
+// o mês/ano dessa data.
+const MES_ABREV_ESOC = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+function competenciaEventoEsoc(ev) {
+  const d = _ppDaysAgo(ev.diasAtras);
+  return String(d.getMonth() + 1).padStart(2, '0') + '/' + d.getFullYear();
+}
+function competenciaOptionsEsoc() {
+  const opts = [];
+  let ano = MOCK_TODAY.ano, mes = MOCK_TODAY.mes;
+  for (let i = 0; i < 8; i++) {
+    opts.push({ value: String(mes).padStart(2, '0') + '/' + ano, label: MES_ABREV_ESOC[mes - 1] + '/' + ano });
+    mes--; if (mes === 0) { mes = 12; ano--; }
+  }
+  return opts;
+}
+// "MM/YYYY" -> número comparável (YYYY*100+MM), pra range De/Até.
+function competenciaNumEsoc(v) {
+  const [mm, yyyy] = v.split('/');
+  return Number(yyyy) * 100 + Number(mm);
+}
+
+function _passaFiltrosEsoc(ev) {
+  const f = ESOC_FILTERS;
+  if (f.empresas.size && !f.empresas.has(String(ev.empresa))) return false;
+  if (f.leiautes.size && !f.leiautes.has(ev.leiaute)) return false;
+  if (f.situacoes.size && !f.situacoes.has(ev.situacao)) return false;
+  if (f.competenciaDe && f.competenciaAte) {
+    const evNum = competenciaNumEsoc(competenciaEventoEsoc(ev));
+    let de = competenciaNumEsoc(f.competenciaDe), ate = competenciaNumEsoc(f.competenciaAte);
+    if (de > ate) { const tmp = de; de = ate; ate = tmp; }
+    if (evNum < de || evNum > ate) return false;
+  }
+  if (f.cnpjEmpregador && !empEsoc(ev.empresa).cnpj.includes(f.cnpjEmpregador)) return false;
+  if (f.cpfColaborador) {
+    const c = colabEsoc(ev.colab);
+    if (!c || !c.cpf.includes(f.cpfColaborador)) return false;
+  }
+  if (f.reciboInformado === 'sim' && !ev.recibo) return false;
+  if (f.reciboInformado === 'nao' && ev.recibo) return false;
+  if (f.busca) {
+    const q = f.busca.toLowerCase();
+    const alvo = (ev.retorno + ' ' + ev.resumo).toLowerCase();
+    if (!alvo.includes(q)) return false;
+  }
+  return true;
+}
+
+function _ordenarEsoc(lista) {
+  const ordem = ESOC_FILTERS.ordenarPor;
+  const copia = [...lista];
+  if (ordem === 'status') {
+    const prioridade = { erro: 0, aguardando_retorno: 1, aguardando_envio: 1, cancelado: 2, sucesso_advertencia: 3, sucesso: 4 };
+    copia.sort((a, b) => (prioridade[a.status] ?? 9) - (prioridade[b.status] ?? 9));
+  } else if (ordem === 'data') {
+    copia.sort((a, b) => a.diasAtras - b.diasAtras);
+  } else if (ordem === 'empresa') {
+    copia.sort((a, b) => empEsoc(a.empresa).nome.localeCompare(empEsoc(b.empresa).nome));
+  }
+  return copia;
+}
+
+function _linhasFiltradasTabEsoc(tab) {
+  return _ordenarEsoc(eventosDoTabEsoc(tab).filter(_passaFiltrosEsoc));
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   DROPDOWN MULTI-SELECT genérico (reaproveita classes .flt-* do core)
+   ═══════════════════════════════════════════════════════════════ */
+const _msEsoc = {};
+function msCreateEsoc(id, label, options, selectedSet, onChange) {
+  _msEsoc[id] = { label, options, selected: selectedSet, onChange, open: false };
+}
+function msLabelEsoc(id) {
+  const m = _msEsoc[id];
+  if (!m.selected.size) return m.label;
+  if (m.selected.size === 1) return [...m.selected][0].length > 18 ? [...m.selected][0].slice(0, 18) + '…' : [...m.selected][0];
+  return `${m.label} (${m.selected.size})`;
+}
+function msRenderEsoc(id) {
+  const m = _msEsoc[id];
+  const el = document.getElementById('ms-' + id);
+  if (!el || !m) return;
+  const itemsHtml = m.options.map(opt => {
+    const checked = m.selected.has(opt.value);
+    return `<div class="flt-item" onclick="event.stopPropagation(); msToggleOptEsoc('${id}','${esc(opt.value)}')">
+      <span>${esc(opt.label)}</span>
+      ${checked ? '<i data-lucide="check" class="flt-check" style="width:14px;height:14px;"></i>' : ''}
+    </div>`;
+  }).join('') || '<div style="padding:10px;font-size:12.5px;color:var(--text-tertiary);">Nenhuma opção.</div>';
+  el.innerHTML = `
+    <div class="flt-trigger ${m.selected.size ? 'has-val' : ''}" onclick="event.stopPropagation(); msToggleOpenEsoc('${id}')">
+      <span>${esc(msLabelEsoc(id))}</span>
+      <i data-lucide="chevron-down" class="flt-chev" style="width:14px;height:14px;"></i>
+    </div>
+    ${m.open ? `<div class="flt-menu">${itemsHtml}</div>` : ''}`;
+  refreshIcons();
+}
+function msToggleOpenEsoc(id) {
+  Object.keys(_msEsoc).forEach(k => { if (k !== id) { _msEsoc[k].open = false; msRenderEsoc(k); } });
+  _msEsoc[id].open = !_msEsoc[id].open;
+  msRenderEsoc(id);
+}
+function msToggleOptEsoc(id, value) {
+  const m = _msEsoc[id];
+  if (m.selected.has(value)) m.selected.delete(value); else m.selected.add(value);
+  msRenderEsoc(id);
+}
+document.addEventListener('click', (e) => {
+  Object.keys(_msEsoc).forEach(id => {
+    const wrap = document.getElementById('wrap-' + id);
+    if (wrap && !wrap.contains(e.target) && _msEsoc[id].open) { _msEsoc[id].open = false; msRenderEsoc(id); }
+  });
+});
+
+/* ═══════════════════════════════════════════════════════════════
+   TOAST
+   ═══════════════════════════════════════════════════════════════ */
+function showToastEsoc(msg, type) {
+  let wrap = document.getElementById('esoc-toast-wrap');
+  if (!wrap) {
+    wrap = document.createElement('div');
+    wrap.id = 'esoc-toast-wrap';
+    wrap.className = 'esoc-toast-wrap';
+    document.body.appendChild(wrap);
+  }
+  const el = document.createElement('div');
+  el.className = 'esoc-toast ' + (type || '');
+  el.innerHTML = `<i data-lucide="${type === 'success' ? 'check-circle' : type === 'danger' ? 'x-circle' : 'info'}" style="width:16px;height:16px;flex-shrink:0;"></i><span>${esc(msg)}</span>`;
+  wrap.appendChild(el);
+  refreshIcons();
+  setTimeout(() => el.remove(), 5000);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   MONTAGEM DA TELA
+   ═══════════════════════════════════════════════════════════════ */
+function tabHasDanger(tabId) {
+  if (tabId === 'criacao_xmls') return XML_LOGS_ESOC.some(x => x.script.some(l => l.lvl === 'err'));
+  return eventosDoTabEsoc(tabId).some(e => e.status === 'erro');
+}
+
+function renderTabsEsoc() {
+  const el = document.getElementById('esoc-tabs');
+  el.innerHTML = TABS_ESOC.map(t => {
+    const count = t.id === 'criacao_xmls' ? XML_LOGS_ESOC.length : eventosDoTabEsoc(t.id).length;
+    const active = t.id === ESOC_ACTIVE_TAB;
+    return `<div class="esoc-tab ${active ? 'active' : ''} ${tabHasDanger(t.id) ? 'has-danger' : ''}" onclick="switchTabEsoc('${t.id}')">
+      ${esc(t.label)}<span class="cnt">${count}</span>
+    </div>`;
+  }).join('');
+}
+
+function switchTabEsoc(tabId) {
+  ESOC_ACTIVE_TAB = tabId;
+  ESOC_SELECTED.clear();
+  renderTabsEsoc();
+  stopXmlLogLoopEsoc();
+  const isXml = tabId === 'criacao_xmls';
+  const isValidados = tabId === 'validados';
+  document.getElementById('esoc-filters-block').style.display = isXml ? 'none' : '';
+  document.getElementById('esoc-table-normal').style.display = (isXml || isValidados) ? 'none' : '';
+  document.getElementById('esoc-table-validados').style.display = isValidados ? '' : 'none';
+  document.getElementById('esoc-table-xml').style.display = isXml ? '' : 'none';
+  if (isXml) {
+    XML_LOGS_ESOC.forEach(item => { ESOC_XML_REVEAL[item.id] = 1; });
+    renderXmlLogFeedEsoc();
+    startXmlLogLoopEsoc();
+  } else if (isValidados) {
+    renderValidadosSubtabsEsoc();
+    renderValidadosTableEsoc();
+  } else {
+    renderTabelaEsoc();
+  }
+}
+
+function colunasEsoc() {
+  return [
+    {
+      key: 'sel', label: '', render: (row) => {
+        const elig = elegivelReenvioEsoc(row) || elegivelCancelamentoEsoc(row);
+        const checked = ESOC_SELECTED.has(row.id);
+        if (!elig) return `<input type="checkbox" class="dt-checkbox esoc-checkbox-disabled" disabled title="Evento aguardando retorno do eSocial — nenhuma ação disponível" />`;
+        return `<input type="checkbox" class="dt-checkbox" ${checked ? 'checked' : ''} onclick="event.stopPropagation(); toggleSelEsoc('${row.id}')" />`;
+      },
+    },
+    { key: 'status', label: 'Status', render: (row) => { const m = STATUS_META_ESOC[row.status]; return `<span class="badge badge-${m.badge}">${esc(m.label)}</span>${row.status === 'sucesso_advertencia' ? ' <i data-lucide="alert-triangle" style="width:12px;height:12px;color:var(--warning);vertical-align:-1px;"></i>' : ''}<div class="dt-td-mono" style="font-size:10px;color:var(--text-tertiary);margin-top:3px;">${esc(row.id)}</div>`; } },
+    { key: 'dataHora', label: 'Data/Hora', render: (row) => `<span style="white-space:nowrap;">D-${row.diasAtras} · ${esc(row.hora)}</span>` },
+    { key: 'leiaute', label: 'Leiaute', render: (row) => `<span class="esoc-leiaute-code" title="${esc((LEIAUTES_ESOC[row.leiaute] || {}).desc || '')}">${esc(row.leiaute)}</span><div class="esoc-leiaute-desc">${esc((LEIAUTES_ESOC[row.leiaute] || {}).desc || '')}</div>` },
+    { key: 'recibo', label: 'Recibo', mono: true, render: (row) => row.recibo ? `<span class="dt-td-mono">${esc(row.recibo)}</span>` : '<span style="color:var(--text-tertiary);">—</span>' },
+    { key: 'situacao', label: 'Situação' },
+    { key: 'retorno', label: 'Retorno', render: (row) => row.retorno ? `<span class="esoc-retorno-link" onclick="event.stopPropagation(); abrirDrawerEsoc('${row.id}')">Ver detalhes</span>` : '<span style="color:var(--text-tertiary);">—</span>' },
+    { key: 'resumo', label: 'Resumo', render: (row) => `<span class="esoc-resumo-cell" title="${esc(row.resumo)}">${esc(row.resumo)}</span>` },
+    { key: 'contribuinte', label: 'Empregador / Colaborador', render: (row) => { const c = colabEsoc(row.colab); return `<div class="dt-td-mono" style="font-size:11px;">${esc(empEsoc(row.empresa).cnpj)}</div>${c ? `<div class="dt-td-mono" style="font-size:10.5px;color:var(--text-tertiary);margin-top:2px;">${esc(c.cpf)}</div>` : ''}`; } },
+  ];
+}
+
+function renderTabelaEsoc() {
+  const rows = _linhasFiltradasTabEsoc(ESOC_ACTIVE_TAB);
+  document.getElementById('esoc-total-label').innerHTML = `Total: <strong>${rows.length}</strong> ${ESOC_SELECTED.size ? `(<strong>${ESOC_SELECTED.size}</strong> selecionado${ESOC_SELECTED.size > 1 ? 's' : ''})` : ''}`;
+  if (!_dt['esoc-eventos']) {
+    dtCreate('esoc-eventos', { columns: colunasEsoc(), rows, rowKey: 'id', pageSize: 8, searchable: false, onRowClick: (row) => abrirDrawerEsoc(row.id), emptyMessage: 'Nenhum evento encontrado para os filtros aplicados.' });
+  } else {
+    _dt['esoc-eventos'].columns = colunasEsoc();
+    dtSetRows('esoc-eventos', rows);
+  }
+  renderBulkBarEsoc();
+}
+
+// dd/mm/aaaa hh:mm:ss — usa diasAtras do item + a hora já mockada em cada linha do script.
+function dataHoraCompletaEsoc(diasAtras, horaStr) {
+  const d = _ppDaysAgo(diasAtras);
+  const dd = String(d.getDate()).padStart(2, '0');
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  return `${dd}/${mm}/${d.getFullYear()} ${horaStr}`;
+}
+
+/* ---- Criação de XMLs: feed de log "ao vivo" (substitui a tabela simples) ---- */
+function renderXmlLogFeedEsoc() {
+  const el = document.getElementById('esoc-xml-logs');
+  if (!el) return;
+  el.innerHTML = XML_LOGS_ESOC.map(item => {
+    const emp = empEsoc(item.empresa), col = colabEsoc(item.colab);
+    const n = Math.min(ESOC_XML_REVEAL[item.id] || 1, item.script.length);
+    const linhas = item.script.slice(0, n);
+    const done = n >= item.script.length;
+    const linhasHtml = linhas.map((l, i) => `
+      <div class="esoc-log-line ${l.lvl}">
+        <span class="t">${esc(dataHoraCompletaEsoc(item.diasAtras, l.t))}</span>
+        <span class="m">${esc(l.msg)}${(!done && i === linhas.length - 1) ? '<span class="esoc-log-cursor"></span>' : ''}</span>
+      </div>`).join('');
+    return `
+      <div class="esoc-log-card">
+        <div class="esoc-log-card-head" style="cursor:pointer;" onclick="abrirDrawerXmlEsoc('${item.id}')">
+          <div>
+            <div class="esoc-log-card-title">${esc(emp.nome)} · ${esc(item.leiaute)} <span style="font-weight:400;color:var(--text-tertiary);">— ${esc((LEIAUTES_ESOC[item.leiaute] || {}).desc || '')}</span></div>
+            <div class="esoc-log-card-sub">${esc(emp.cnpj)}${col ? ' · ' + esc(col.nome) : ''}</div>
+          </div>
+          ${!done ? `<span class="badge badge-info">Em andamento</span>` : `<span class="badge badge-${linhas.some(l=>l.lvl==='err') ? 'danger' : 'success'}">Concluído</span>`}
+        </div>
+        <div class="esoc-log-box" id="esoc-log-box-${item.id}">${linhasHtml}</div>
+      </div>`;
+  }).join('');
+  refreshIcons();
+  XML_LOGS_ESOC.forEach(item => {
+    const box = document.getElementById('esoc-log-box-' + item.id);
+    if (box) box.scrollTop = box.scrollHeight;
+  });
+}
+
+function startXmlLogLoopEsoc() {
+  stopXmlLogLoopEsoc();
+  _esocXmlLogTimer = setInterval(() => {
+    let algumIncompleto = false;
+    XML_LOGS_ESOC.forEach(item => {
+      const atual = ESOC_XML_REVEAL[item.id] || 1;
+      if (atual < item.script.length) { ESOC_XML_REVEAL[item.id] = atual + 1; algumIncompleto = true; }
+    });
+    renderXmlLogFeedEsoc();
+    if (!algumIncompleto) stopXmlLogLoopEsoc();
+  }, 1700);
+}
+function stopXmlLogLoopEsoc() {
+  if (_esocXmlLogTimer) { clearInterval(_esocXmlLogTimer); _esocXmlLogTimer = null; }
+}
+
+/* ---- Validados: sub-abas (Tabelas / Periódicos / Não Periódicos / SST / Advertências) ---- */
+function switchValidadosSubEsoc(subId) {
+  ESOC_VALIDADOS_SUB = subId;
+  renderValidadosSubtabsEsoc();
+  renderValidadosTableEsoc();
+}
+
+function renderValidadosSubtabsEsoc() {
+  const el = document.getElementById('esoc-validados-subtabs');
+  if (!el) return;
+  el.innerHTML = VALIDADOS_SUBTABS_ESOC.map(s => `
+    <div class="esoc-subtab ${s.id === ESOC_VALIDADOS_SUB ? 'active' : ''}" onclick="switchValidadosSubEsoc('${s.id}')">${esc(s.label)}</div>
+  `).join('');
+}
+
+function _linhasValidadasSubEsoc(subId) {
+  return _linhasFiltradasTabEsoc('validados').filter(ev => {
+    if (subId === 'advertencias') return ev.status === 'sucesso_advertencia';
+    return (LEIAUTES_ESOC[ev.leiaute] || {}).classe === subId;
+  });
+}
+
+function renderValidadosTableEsoc() {
+  const rows = _linhasValidadasSubEsoc(ESOC_VALIDADOS_SUB);
+  const cols = [
+    { key: 'status', label: 'Status', render: (r) => { const m = STATUS_META_ESOC[r.status]; return `<span class="badge badge-${m.badge}">${esc(m.label)}</span>`; } },
+    { key: 'empresa', label: 'Empresa', render: (r) => `<div>${esc(empEsoc(r.empresa).nome)}</div><div class="dt-td-mono" style="font-size:11px;color:var(--text-tertiary);">${esc(empEsoc(r.empresa).cnpj)}</div>` },
+    { key: 'evento', label: 'Evento', render: (r) => `<span class="esoc-leiaute-code">${esc(r.leiaute)}</span><div class="esoc-leiaute-desc">${esc((LEIAUTES_ESOC[r.leiaute] || {}).desc || '')}</div>` },
+    { key: 'dataEnvio', label: 'Data Envio', render: (r) => `D-${r.diasAtras} · ${esc(r.hora)}` },
+    { key: 'tipoEnvio', label: 'Tipo de Envio', render: () => 'Inclusão' },
+    { key: 'recibo', label: 'Nº Recibo', mono: true, render: (r) => r.recibo ? `<span class="dt-td-mono">${esc(r.recibo)}</span>` : '<span style="color:var(--text-tertiary);">—</span>' },
+  ];
+  if (!_dt['esoc-validados']) {
+    dtCreate('esoc-validados', { columns: cols, rows, rowKey: 'id', pageSize: 8, searchable: false, onRowClick: (row) => abrirDrawerEsoc(row.id), emptyMessage: 'Nenhum evento validado nesta categoria.' });
+  } else {
+    _dt['esoc-validados'].columns = cols;
+    dtSetRows('esoc-validados', rows);
+  }
+}
+
+function toggleRelatorioMenuEsoc() {
+  const m = document.getElementById('relatorio-menu');
+  m.style.display = m.style.display === 'none' ? 'block' : 'none';
+}
+document.addEventListener('click', (e) => {
+  const menu = document.getElementById('relatorio-menu');
+  if (menu && menu.style.display !== 'none' && !e.target.closest('#wrap-relatorio')) menu.style.display = 'none';
+});
+
+// ── Relatório PDF: layout A4 paginado, mesmo padrão visual usado pelo time
+// (cabeçalho/rodapé com marca BHub, linhas de grupo por empresa, paginação
+// automática) — adaptado pra usar os dados reais da sub-aba, não mock. ──
+const BHUB_LOGO_GRANDE_SVG = `<svg width="122" height="22" viewBox="0 0 2144 392" fill="none" xmlns="http://www.w3.org/2000/svg" style="color:var(--rel-text-primary);">
+<path d="M1339.34 36.4545C1389.87 33.1576 1433.53 71.4036 1436.92 121.934C1440.31 172.464 1402.14 216.193 1351.61 219.669C1300.96 223.152 1257.1 184.867 1253.71 134.211C1250.31 83.5546 1288.67 39.7597 1339.34 36.4545ZM1355.85 173.776C1382.95 166.665 1394.5 140.19 1387.49 114.159C1384.27 102.492 1376.58 92.5663 1366.08 86.5329C1356.09 80.8489 1346.8 80.8596 1335.64 82.1858C1308 90.4248 1294.94 115.33 1303.28 142.92C1306.67 154.491 1314.57 164.212 1325.21 169.894C1335.54 175.364 1344.62 175.679 1355.85 173.776Z" fill="currentColor"/>
+<path d="M1455.17 41.9284H1499.56C1520.09 68.3914 1540.94 98.4765 1560.31 126.031C1561.86 99.1216 1560.76 69.5329 1561.89 41.9284H1608.7C1608.7 58.0209 1609.42 210.501 1607.78 213.302H1565.72C1553.92 201.718 1552.52 194.351 1543.59 182.117C1529.99 163.507 1516.55 144.976 1503.19 126.183C1502.95 155.225 1502.54 184.265 1501.97 213.302H1455.17V41.9284Z" fill="currentColor"/>
+<path d="M1877.7 41.9284H2001.07V81.985C1976.02 82.613 1950.96 83.0668 1925.91 83.3462C1925.13 90.9261 1924.91 100.34 1924.53 108.072H1992V145.832C1969.72 145.793 1946.73 145.489 1924.51 146.002V173H2002.51V213.302H1877.7V41.9284Z" fill="currentColor"/>
+<path d="M1177.74 38.388C1178.84 38.2342 1179.96 38.1284 1181.07 38.0708C1208.97 36.689 1230.91 44.8923 1250.52 65.0165C1253.28 67.8511 1256.48 70.4372 1256.66 74.6546C1255.35 79.4471 1228.83 97.7521 1223.31 101.927C1209.77 92.8733 1202.71 82.503 1183.43 82.9415C1173.22 83.0923 1163.5 87.3831 1156.5 94.8319C1119.49 133.933 1169.69 210.106 1222.85 153.401C1230.02 156.472 1235.34 160.645 1241.49 165.259L1259.13 178.368C1231.64 222.165 1166.5 230.706 1127.18 199.097C1108.61 184.113 1096.75 162.376 1094.2 138.657C1088.49 84.4548 1124.43 43.9619 1177.74 38.388Z" fill="currentColor"/>
+<path d="M1630.83 41.9284H1764.7L1764.63 84.8325H1721.7V169.5V213.302H1673.7V84.8325H1630.83V41.9284Z" fill="currentColor"/>
+<path d="M1805.24 40.5755C1819.79 39.8661 1838.17 40.4374 1853 40.49C1853.03 69.639 1856.72 156.057 1848.55 178.983C1843.7 192.576 1834.07 203.013 1821.01 209.135C1805.07 216.608 1788.07 218.179 1771.52 212.216C1756.22 204.062 1748.01 195.219 1740.29 179.278C1732.98 164.161 1762.48 157.721 1773.71 153.577C1776.36 159.891 1780.76 172.495 1788.99 172.946C1801.25 173.618 1804.13 161.873 1804.21 151.976C1804.42 127.046 1804.26 102.128 1804.47 77.1992C1804.62 65.3319 1804.14 52.3155 1805.24 40.5755Z" fill="currentColor"/>
+<path d="M228.928 0.682856C245.158 0.714856 296.449 -0.546141 309.268 1.91286C316.918 3.34486 324.201 6.30286 330.683 10.6089C356.975 28.2319 363.142 63.0908 345.525 89.2208C367.985 110.853 372.102 139.921 354.63 166.122C352.982 168.416 350.982 170.512 348.979 172.502C341.911 179.432 333.086 184.302 323.455 186.586C310.582 189.726 246.872 188.383 228.928 188.347V0.682856ZM315.738 74.5519C319.363 69.6929 323.226 63.2789 322.683 56.9099C320.094 26.5259 283.905 33.8459 262 33.6829V81.4439C278.891 81.5949 303.113 84.8299 315.738 74.5519ZM262 155.347C274.876 155.428 287.757 155.533 300.632 155.615C310.668 155.679 317.443 155.702 325.598 149.207C354.822 106.947 281.918 114.448 262 114.586V155.347Z" fill="currentColor"/>
+<path d="M698 0.682861H731.168L731.218 64.1399C741.407 54.8309 752.903 50.8119 766.698 50.4709C785.349 50.1049 803.387 57.1369 816.87 70.0289C829.78 82.4389 837.225 99.4739 837.563 117.379C837.983 138.332 829.782 154.724 815.549 169.478C814.967 170.024 814.37 170.554 813.76 171.068C787.425 193.266 754.497 196.524 731.167 168.743L731.168 188.347H698V0.682861ZM769.499 155.313C789.733 154.476 805.462 137.402 804.639 117.166C803.815 96.9309 786.751 81.1909 766.515 82.0009C746.26 82.8119 730.502 99.8959 731.326 120.15C732.151 140.404 749.245 156.151 769.499 155.313Z" fill="currentColor"/>
+<path d="M383.072 0.682861H416.302V80.5869H486.49V0.682861H519.832V184.765C519.894 185.428 519.441 186.929 519.259 187.65C514.396 189.189 492.69 188.447 486.49 188.347V113.515H416.302V188.347H383.072V0.682861Z" fill="currentColor"/>
+<path d="M539 49.6829H572.071C572.034 62.5809 570.867 116.957 573.366 127.081C574.96 133.689 578.301 139.748 583.039 144.622C602.444 164.215 639.952 153.237 643.635 127.09C646.826 104.439 645.087 73.1939 645 49.6829H678.071V101.015V187.586H645V168.096C623.449 198.102 583.586 190.679 559.626 167.612C537.589 146.396 538.866 121.242 538.896 93.1839L539 49.6829Z" fill="currentColor"/>
+<path d="M0 16.2679C2.51395 10.2149 5.38004 4.70588 11.7954 1.98588C17.4184 -0.398123 169.426 -0.83912 175.662 1.78688C179.626 3.45488 184.447 7.06888 186.062 11.1819C187.556 14.9899 187.898 19.9629 188.088 24.0179C189.474 53.6259 188.262 83.8769 188.224 113.548C188.199 133.685 189.795 155.209 187.805 175.161C185.122 179.652 179.614 187.639 173.819 187.843C122.643 189.645 71.0166 188.431 19.7489 188.336C8.46048 188.315 3.65794 182.337 0 172.513V16.2679ZM94 103.525L131.403 66.1219C122.984 57.5609 102.795 34.4419 93.1391 32.4209C85.3881 34.9439 63.1712 59.2639 56.5 66.0249L94 103.525ZM102.042 111.973C107.564 117.551 131.942 142.819 136.976 145.729C145.418 145.427 149.808 140.053 155.401 133.681C160.451 127.927 171.643 119.595 172.966 113.441C171.862 103.418 147.723 82.6129 139.464 74.5509L102.042 111.973ZM52.1395 144.796C63.3918 134.345 74.5298 122.841 85.3959 111.921L47.895 74.4209C40.3975 81.8079 17.5077 101.893 15.0981 111.024C13.381 117.531 40.6524 145.249 48.3926 145.231C49.2182 145.229 51.1548 144.982 52.1395 144.796Z" fill="currentColor"/>
+<path d="M2011.61 41.915C2054.59 40.9791 2100.86 41.8607 2144 41.9284V84.8325H2102.51V213.302H2054.49V84.8325H2011.6C2010.9 73.2044 2011.14 53.4508 2011.61 41.915Z" fill="currentColor"/>
+<path d="M965.698 0H973.698V392H965.698V0Z" fill="currentColor"/>
+</svg>`;
+const BHUB_LOGO_PEQUENO_SVG = `<svg width="48.8" height="11" viewBox="0 0 838 189" fill="none" xmlns="http://www.w3.org/2000/svg" style="color:var(--rel-text-primary);">
+<path d="M228.928 0.682856C245.158 0.714856 296.449 -0.546141 309.268 1.91286C316.918 3.34486 324.201 6.30286 330.683 10.6089C356.975 28.2319 363.142 63.0908 345.525 89.2208C367.985 110.853 372.102 139.921 354.63 166.122C352.982 168.416 350.982 170.512 348.979 172.502C341.911 179.432 333.086 184.302 323.455 186.586C310.582 189.726 246.872 188.383 228.928 188.347V0.682856ZM315.738 74.5519C319.363 69.6929 323.226 63.2789 322.683 56.9099C320.094 26.5259 283.905 33.8459 262 33.6829V81.4439C278.891 81.5949 303.113 84.8299 315.738 74.5519ZM262 155.347C274.876 155.428 287.757 155.533 300.632 155.615C310.668 155.679 317.443 155.702 325.598 149.207C354.822 106.947 281.918 114.448 262 114.586V155.347Z" fill="currentColor"/>
+<path d="M698 0.682861H731.168L731.218 64.1399C741.407 54.8309 752.903 50.8119 766.698 50.4709C785.349 50.1049 803.387 57.1369 816.87 70.0289C829.78 82.4389 837.225 99.4739 837.563 117.379C837.983 138.332 829.782 154.724 815.549 169.478C814.967 170.024 814.37 170.554 813.76 171.068C787.425 193.266 754.497 196.524 731.167 168.743L731.168 188.347H698V0.682861ZM769.499 155.313C789.733 154.476 805.462 137.402 804.639 117.166C803.815 96.9309 786.751 81.1909 766.515 82.0009C746.26 82.8119 730.502 99.8959 731.326 120.15C732.151 140.404 749.245 156.151 769.499 155.313Z" fill="currentColor"/>
+<path d="M383.072 0.682861H416.302V80.5869H486.49V0.682861H519.832V184.765C519.894 185.428 519.441 186.929 519.259 187.65C514.396 189.189 492.69 188.447 486.49 188.347V113.515H416.302V188.347H383.072V0.682861Z" fill="currentColor"/>
+<path d="M539 49.6829H572.071C572.034 62.5809 570.867 116.957 573.366 127.081C574.96 133.689 578.301 139.748 583.039 144.622C602.444 164.215 639.952 153.237 643.635 127.09C646.826 104.439 645.087 73.1939 645 49.6829H678.071V101.015V187.586H645V168.096C623.449 198.102 583.586 190.679 559.626 167.612C537.589 146.396 538.866 121.242 538.896 93.1839L539 49.6829Z" fill="currentColor"/>
+<path d="M0 16.2679C2.51395 10.2149 5.38004 4.70588 11.7954 1.98588C17.4184 -0.398123 169.426 -0.83912 175.662 1.78688C179.626 3.45488 184.447 7.06888 186.062 11.1819C187.556 14.9899 187.898 19.9629 188.088 24.0179C189.474 53.6259 188.262 83.8769 188.224 113.548C188.199 133.685 189.795 155.209 187.805 175.161C185.122 179.652 179.614 187.639 173.819 187.843C122.643 189.645 71.0166 188.431 19.7489 188.336C8.46048 188.315 3.65794 182.337 0 172.513V16.2679ZM94 103.525L131.403 66.1219C122.984 57.5609 102.795 34.4419 93.1391 32.4209C85.3881 34.9439 63.1712 59.2639 56.5 66.0249L94 103.525ZM102.042 111.973C107.564 117.551 131.942 142.819 136.976 145.729C145.418 145.427 149.808 140.053 155.401 133.681C160.451 127.927 171.643 119.595 172.966 113.441C171.862 103.418 147.723 82.6129 139.464 74.5509L102.042 111.973ZM52.1395 144.796C63.3918 134.345 74.5298 122.841 85.3959 111.921L47.895 74.4209C40.3975 81.8079 17.5077 101.893 15.0981 111.024C13.381 117.531 40.6524 145.249 48.3926 145.231C49.2182 145.229 51.1548 144.982 52.1395 144.796Z" fill="currentColor"/>
+</svg>`;
+
+function _relatorioDataFmtEsoc(diasAtras) {
+  const d = _ppDaysAgo(diasAtras);
+  return String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0') + '/' + d.getFullYear();
+}
+function _relatorioValidacaoEsoc(r) {
+  return /manualmente/i.test(r.situacao || '') ? 'Usuário' : 'Sistema';
+}
+// Entradas "achatadas" (linha de grupo + linhas de dado), pra poder paginar
+// igual a uma lista contínua, com o grupo se repetindo quando um evento
+// atravessa pra próxima página.
+function _relatorioEntradasEsoc(rows) {
+  const porEmpresa = {};
+  rows.forEach(r => { (porEmpresa[r.empresa] = porEmpresa[r.empresa] || []).push(r); });
+  const entries = [];
+  Object.keys(porEmpresa).forEach(empIdx => {
+    const emp = empEsoc(Number(empIdx));
+    entries.push({ type: 'group', emp });
+    porEmpresa[empIdx].forEach(r => entries.push({ type: 'row', emp, r }));
+  });
+  return entries;
+}
+function _relatorioPaginarEsoc(entries) {
+  const GROUP_ROW_H = 28, DATA_ROW_H = 24, HEAD_ROW_H = 26, CABECALHO_H = 88, RODAPE_H = 40, CONTEUDO_PADDING = 16, A4_H = 1123;
+  const AVAILABLE = A4_H - CABECALHO_H - RODAPE_H - CONTEUDO_PADDING - HEAD_ROW_H - GROUP_ROW_H;
+  const pages = []; let current = []; let height = 0;
+  for (let i = 0; i < entries.length; i++) {
+    const e = entries[i];
+    const h = e.type === 'group' ? GROUP_ROW_H : DATA_ROW_H;
+    let needed = h;
+    if (e.type === 'group') {
+      const nextIsRow = entries[i + 1] && entries[i + 1].type === 'row';
+      if (nextIsRow) needed += DATA_ROW_H;
+    }
+    if (height + needed > AVAILABLE && current.length > 0) { pages.push(current); current = []; height = 0; }
+    current.push(e); height += h;
+  }
+  if (current.length) pages.push(current);
+  return pages;
+}
+
+// Emite um relatório dos eventos validados da sub-aba atual, agrupado por
+// empresa. PDF abre (em nova aba) um layout A4 paginado, pronto pra
+// impressão/"Salvar como PDF". XLSX ainda não gera arquivo de verdade no
+// protótipo — só simula a ação.
+function emitirRelatorioValidadosEsoc(formato) {
+  document.getElementById('relatorio-menu').style.display = 'none';
+  const subLabel = VALIDADOS_SUBTABS_ESOC.find(s => s.id === ESOC_VALIDADOS_SUB).label;
+  const rows = _linhasValidadasSubEsoc(ESOC_VALIDADOS_SUB);
+  if (formato === 'xlsx') {
+    showToastEsoc(`Exportação simulada: relatório XLSX de "${subLabel}" (${rows.length} registro${rows.length !== 1 ? 's' : ''}).`, 'success');
+    return;
+  }
+
+  const empresasEnvolvidas = [...new Set(rows.map(r => r.empresa))];
+  const empresaLabel = empresasEnvolvidas.length === 1 ? empEsoc(empresasEnvolvidas[0]).nome : 'Consolidado — Múltiplas Empresas';
+  const cnpjLabel = empresasEnvolvidas.length === 1 ? empEsoc(empresasEnvolvidas[0]).cnpj : '—';
+  const opts = competenciaOptionsEsoc();
+  const compDeLabel = (opts.find(o => o.value === ESOC_FILTERS.competenciaDe) || {}).label;
+  const compAteLabel = (opts.find(o => o.value === ESOC_FILTERS.competenciaAte) || {}).label;
+  const competenciaLabel = compDeLabel && compAteLabel ? (compDeLabel === compAteLabel ? compDeLabel : `${compDeLabel} – ${compAteLabel}`) : 'Todas';
+  const agora = new Date();
+  const emissao = `${String(agora.getDate()).padStart(2, '0')}/${String(agora.getMonth() + 1).padStart(2, '0')}/${agora.getFullYear()} ${String(agora.getHours()).padStart(2, '0')}:${String(agora.getMinutes()).padStart(2, '0')}:${String(agora.getSeconds()).padStart(2, '0')}`;
+
+  const entries = _relatorioEntradasEsoc(rows);
+  const pages = _relatorioPaginarEsoc(entries);
+
+  const paginasHtml = (pages.length ? pages : [[]]).map((pageEntries, idx) => {
+    const firstEntry = pageEntries[0];
+    const needsContinuationHeader = firstEntry && firstEntry.type === 'row';
+    const linhasHtml = (needsContinuationHeader
+      ? `<tr class="group-row"><td colspan="7">Empresa: ${esc(firstEntry.emp.nome)} <span class="cnpj">CNPJ: ${esc(firstEntry.emp.cnpj)}</span> · continuação</td></tr>`
+      : '') + pageEntries.map(e => {
+        if (e.type === 'group') {
+          return `<tr class="group-row"><td colspan="7">Empresa: ${esc(e.emp.nome)} <span class="cnpj">CNPJ: ${esc(e.emp.cnpj)}</span></td></tr>`;
+        }
+        const r = e.r;
+        return `<tr class="data-row">
+          <td>${esc(r.leiaute)} ${esc((LEIAUTES_ESOC[r.leiaute] || {}).desc || '')}</td>
+          <td>${_relatorioDataFmtEsoc(r.diasAtras)}</td>
+          <td>—</td>
+          <td>Inclusão</td>
+          <td class="secundario">${r.recibo ? esc(r.recibo) : '—'}</td>
+          <td>${_relatorioValidacaoEsoc(r)}</td>
+          <td>Não</td>
+        </tr>`;
+      }).join('');
+    return `
+      <div class="a4-page">
+        <div class="cabecalho">
+          <div class="cabecalho-top">
+            <div class="cabecalho-brand">${BHUB_LOGO_GRANDE_SVG}</div>
+            <div class="cabecalho-titulo">Relatório dos Arquivos Validados — ${esc(subLabel)}</div>
+          </div>
+          <div class="cabecalho-grid">
+            <span><span class="label">Empresa: </span><span class="value">${esc(empresaLabel)}</span></span>
+            <span class="cabecalho-col-right"><span class="label">CNPJ: </span><span class="value">${esc(cnpjLabel)}</span></span>
+            <span><span class="label">Competência: </span><span class="value">${esc(competenciaLabel)}</span></span>
+            <span class="cabecalho-col-right"><span class="label">Emissão: </span><span class="value">${esc(emissao)}</span></span>
+          </div>
+        </div>
+        <div class="conteudo">
+          <table class="relatorio">
+            <colgroup><col class="evento"><col class="data"><col class="codigo"><col class="tipo"><col class="recibo"><col class="validacao"><col class="xml"></colgroup>
+            <thead><tr><th>Evento</th><th>Data</th><th>Código eSocial</th><th>Tipo de envio</th><th>Nº Recibo</th><th>Validação</th><th>XML Alterado</th></tr></thead>
+            <tbody>${linhasHtml || `<tr class="data-row"><td colspan="7" style="color:var(--textSecondary);">Nenhum evento nesta categoria para os filtros aplicados.</td></tr>`}</tbody>
+          </table>
+        </div>
+        <div class="rodape">
+          <span class="rodape-logo">powered by ${BHUB_LOGO_PEQUENO_SVG}</span>
+          <span class="rodape-page">Página ${idx + 1} de ${pages.length || 1}</span>
+        </div>
+      </div>`;
+  }).join('');
+
+  const html = `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Relatório dos Arquivos Validados — ${esc(subLabel)}</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@500;700;800;900&display=swap">
+  <style>
+    :root{ --rel-brand-pink:#f25461; --rel-brand-pink-soft:#fde7ea; --rel-text-primary:#18181b; --rel-text-secondary:#52525b; --rel-border:#e4e4e7; --rel-border-strong:#d4d4d8; --rel-surface:#ffffff; --rel-surface-muted:#f7f7f8; --rel-page-bg:#ebebed; }
+    *{box-sizing:border-box;} html,body{margin:0;background:var(--rel-page-bg);font-family:'Nunito Sans',sans-serif;}
+    #pages{padding:40px 0;display:flex;flex-direction:column;align-items:center;}
+    .a4-page{width:794px;height:1123px;background:var(--rel-surface);box-shadow:0 4px 16px rgba(0,0,0,0.08);margin-bottom:40px;display:flex;flex-direction:column;overflow:hidden;}
+    .cabecalho{height:88px;flex:0 0 88px;border-bottom:2px solid var(--rel-border-strong);padding:12px 24px 8px;display:flex;flex-direction:column;justify-content:space-between;}
+    .cabecalho-top{display:flex;align-items:center;justify-content:space-between;}
+    .cabecalho-brand{display:flex;align-items:center;} .cabecalho-brand svg{flex-shrink:0;}
+    .cabecalho-titulo{font-size:13px;font-weight:800;color:var(--rel-text-primary);text-transform:uppercase;letter-spacing:0.3px;text-align:right;}
+    .cabecalho-grid{display:grid;grid-template-columns:1fr 1fr;row-gap:2px;column-gap:24px;font-size:10px;}
+    .cabecalho-grid .label{font-weight:500;color:var(--rel-text-secondary);} .cabecalho-grid .value{font-weight:700;color:var(--rel-text-primary);}
+    .cabecalho-col-right{text-align:right;}
+    .conteudo{flex:1 1 auto;padding:16px 24px 0;overflow:hidden;}
+    table.relatorio{width:100%;border-collapse:collapse;}
+    table.relatorio thead tr{height:26px;background:var(--rel-brand-pink);}
+    table.relatorio thead th{font-size:9px;font-weight:800;color:#fff;text-transform:uppercase;text-align:left;padding:0 8px;letter-spacing:0.2px;}
+    table.relatorio tbody tr.group-row{height:28px;background:var(--rel-brand-pink-soft);border-bottom:2px solid var(--rel-brand-pink);}
+    table.relatorio tbody tr.group-row td{font-size:10.5px;font-weight:800;color:var(--rel-text-primary);padding:0 8px;}
+    table.relatorio tbody tr.group-row .cnpj{font-weight:700;color:var(--rel-text-secondary);margin-left:8px;}
+    table.relatorio tbody tr.data-row{height:24px;}
+    table.relatorio tbody tr.data-row:nth-child(even){background:var(--rel-surface-muted);}
+    table.relatorio tbody tr.data-row td{font-size:10.5px;font-weight:700;color:var(--rel-text-primary);padding:0 8px;border-bottom:1px solid var(--rel-border);}
+    table.relatorio tbody tr.data-row td.secundario{color:var(--rel-text-secondary);font-weight:500;}
+    col.evento{width:24%;} col.data{width:10%;} col.codigo{width:13%;} col.tipo{width:12%;} col.recibo{width:21%;} col.validacao{width:10%;} col.xml{width:10%;}
+    .rodape{height:40px;flex:0 0 40px;border-top:1px solid var(--rel-border);padding:0 24px;display:flex;align-items:center;justify-content:space-between;font-size:9px;font-weight:500;color:var(--rel-text-secondary);}
+    .rodape-logo{display:flex;align-items:center;gap:4px;} .rodape-logo svg{flex-shrink:0;vertical-align:middle;}
+    .rodape-page{font-weight:700;}
+    .rel-voltar{max-width:794px;margin:20px auto 0;padding:0 4px;}
+    .rel-voltar a{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--rel-brand-pink);text-decoration:none;font-family:'Nunito Sans',sans-serif;}
+    .rel-voltar a:hover{text-decoration:underline;}
+    @media print{ body{background:#fff;} .a4-page{box-shadow:none;margin:0;} .rel-voltar{display:none;} }
+  </style></head><body>
+  <div class="rel-voltar"><a href="painel-esocial.html">← Voltar ao Painel eSocial</a></div>
+  <div id="pages">${paginasHtml}</div>
+  </body></html>`;
+
+  // Protótipo: navega a própria aba pro HTML do relatório (em vez de abrir
+  // outra aba) — assim o link "Voltar ao Painel eSocial" dentro do relatório
+  // simplesmente recarrega esta mesma tela.
+  document.open(); document.write(html); document.close();
+}
+
+function renderBulkBarEsoc() {
+  const bar = document.getElementById('esoc-bulkbar');
+  const n = ESOC_SELECTED.size;
+  bar.classList.toggle('show', n > 0);
+  if (!n) return;
+  const rows = [...ESOC_SELECTED].map(id => EVENTOS_ESOC.find(e => e.id === id)).filter(Boolean);
+  const podeReenviar = rows.some(elegivelReenvioEsoc);
+  const podeCancelar = rows.some(elegivelCancelamentoEsoc);
+  document.getElementById('esoc-bulk-count').textContent = `${n} evento${n > 1 ? 's' : ''} selecionado${n > 1 ? 's' : ''}`;
+  document.getElementById('esoc-bulk-acts').innerHTML = `
+    ${podeReenviar ? `<button class="btn btn-secondary" style="font-size:12.5px;padding:6px 12px;" onclick="reenviarLoteEsoc()"><i data-lucide="rotate-cw" style="width:13px;height:13px;"></i>Reenviar</button>` : ''}
+    ${podeCancelar ? `<button class="btn btn-danger" style="font-size:12.5px;padding:6px 12px;" onclick="cancelarLoteEsoc()"><i data-lucide="x" style="width:13px;height:13px;"></i>Cancelar envio</button>` : ''}
+  `;
+  refreshIcons();
+}
+
+function toggleSelEsoc(id) {
+  if (ESOC_SELECTED.has(id)) ESOC_SELECTED.delete(id); else ESOC_SELECTED.add(id);
+  renderTabelaEsoc();
+}
+
+function selecionarTodosElegiveisEsoc() {
+  const rows = _linhasFiltradasTabEsoc(ESOC_ACTIVE_TAB).filter(r => elegivelReenvioEsoc(r) || elegivelCancelamentoEsoc(r));
+  const todosJaSelecionados = rows.length > 0 && rows.every(r => ESOC_SELECTED.has(r.id));
+  if (todosJaSelecionados) rows.forEach(r => ESOC_SELECTED.delete(r.id));
+  else rows.forEach(r => ESOC_SELECTED.add(r.id));
+  renderTabelaEsoc();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   FILTROS — pesquisar / limpar / atualizar / exportar
+   ═══════════════════════════════════════════════════════════════ */
+function _renderTabAtivaEsoc() {
+  if (ESOC_ACTIVE_TAB === 'validados') renderValidadosTableEsoc();
+  else if (ESOC_ACTIVE_TAB !== 'criacao_xmls') renderTabelaEsoc();
+}
+
+function pesquisarEsoc() {
+  ESOC_FILTERS.cnpjEmpregador = document.getElementById('flt-cnpj-emp').value.trim();
+  ESOC_FILTERS.cpfColaborador = document.getElementById('flt-cpf-colab').value.trim();
+  ESOC_FILTERS.busca = document.getElementById('flt-busca').value.trim();
+  ESOC_FILTERS.reciboInformado = document.getElementById('flt-recibo').value;
+  ESOC_FILTERS.ordenarPor = document.getElementById('flt-ordenar').value;
+  ESOC_FILTERS.competenciaDe = document.getElementById('flt-competencia-de').value;
+  ESOC_FILTERS.competenciaAte = document.getElementById('flt-competencia-ate').value;
+  ESOC_FILTERS.empresas = new Set([..._msEsoc['empresa'].selected]);
+  ESOC_FILTERS.leiautes = new Set([..._msEsoc['leiaute'].selected]);
+  ESOC_FILTERS.situacoes = new Set([..._msEsoc['situacao'].selected]);
+  renderTabsEsoc();
+  _renderTabAtivaEsoc();
+  showToastEsoc('Filtros aplicados.', 'success');
+}
+
+function limparFiltrosEsoc() {
+  document.getElementById('flt-cnpj-emp').value = '';
+  document.getElementById('flt-cpf-colab').value = '';
+  document.getElementById('flt-busca').value = '';
+  document.getElementById('flt-recibo').value = 'todos';
+  document.getElementById('flt-ordenar').value = 'status';
+  document.getElementById('flt-competencia-de').value = competenciaOptionsEsoc()[0].value;
+  document.getElementById('flt-competencia-ate').value = competenciaOptionsEsoc()[0].value;
+  Object.keys(_msEsoc).forEach(id => { _msEsoc[id].selected.clear(); _msEsoc[id].open = false; msRenderEsoc(id); });
+  Object.assign(ESOC_FILTERS, { empresas: new Set(), leiautes: new Set(), situacoes: new Set(), cnpjEmpregador: '', cpfColaborador: '', busca: '', competenciaDe: competenciaOptionsEsoc()[0].value, competenciaAte: competenciaOptionsEsoc()[0].value, ordenarPor: 'status', reciboInformado: 'todos' });
+  renderTabsEsoc();
+  _renderTabAtivaEsoc();
+  showToastEsoc('Filtros limpos.', 'info');
+}
+
+function atualizarConsultaEsoc() {
+  renderTabsEsoc();
+  if (ESOC_ACTIVE_TAB === 'criacao_xmls') renderXmlLogFeedEsoc();
+  else if (ESOC_ACTIVE_TAB === 'validados') renderValidadosTableEsoc();
+  else renderTabelaEsoc();
+  showToastEsoc('Consulta atualizada.', 'success');
+}
+
+function exportarConsultaEsoc() {
+  const rows = ESOC_ACTIVE_TAB === 'criacao_xmls' ? XML_LOGS_ESOC : _linhasFiltradasTabEsoc(ESOC_ACTIVE_TAB);
+  showToastEsoc(`Exportação simulada: ${rows.length} registro${rows.length !== 1 ? 's' : ''} da aba "${TABS_ESOC.find(t => t.id === ESOC_ACTIVE_TAB).label}".`, 'success');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   AÇÕES (reenviar / cancelar / validar manualmente)
+   ═══════════════════════════════════════════════════════════════ */
+function reenviarEsoc(id) {
+  const ev = EVENTOS_ESOC.find(e => e.id === id);
+  showConfirmModal({
+    title: 'Reenviar evento',
+    message: `Confirma o reenvio do evento <strong>${esc(id)}</strong> (${esc(ev.leiaute)}) para o eSocial?`,
+    confirmLabel: 'Reenviar',
+    onConfirm: () => {
+      ev.status = 'aguardando_retorno'; ev.tab = 'processamento'; ev.retorno = ''; ev.situacao = 'Enviado, aguardando retorno do eSocial'; ev.resumo = 'Reenviado pelo operador — aguardando retorno.';
+      fecharDrawerEsoc();
+      renderTabsEsoc(); renderTabelaEsoc();
+      showToastEsoc('Evento reenviado com sucesso. Movido para "Em Processamento".', 'success');
+    },
+  });
+}
+
+function reenviarLoteEsoc() {
+  const alvo = [...ESOC_SELECTED].map(id => EVENTOS_ESOC.find(e => e.id === id)).filter(elegivelReenvioEsoc);
+  showConfirmModal({
+    title: 'Reenviar em lote',
+    message: `Confirma o reenvio de <strong>${alvo.length}</strong> evento${alvo.length > 1 ? 's' : ''} selecionado${alvo.length > 1 ? 's' : ''}?`,
+    confirmLabel: 'Reenviar todos',
+    onConfirm: () => {
+      let ok = 0, falha = 0;
+      alvo.forEach(ev => {
+        if (Math.random() < 0.85) { ev.status = 'aguardando_retorno'; ev.tab = 'processamento'; ev.retorno = ''; ev.situacao = 'Enviado, aguardando retorno do eSocial'; ev.resumo = 'Reenviado pelo operador — aguardando retorno.'; ok++; }
+        else falha++;
+      });
+      ESOC_SELECTED.clear();
+      renderTabsEsoc(); renderTabelaEsoc();
+      showToastEsoc(`Reenvio em lote concluído: ${ok} processado${ok !== 1 ? 's' : ''}, ${falha} recusado${falha !== 1 ? 's' : ''}.`, falha ? 'warning' : 'success');
+    },
+  });
+}
+
+function cancelarEsoc(id) {
+  const ev = EVENTOS_ESOC.find(e => e.id === id);
+  showConfirmModal({
+    title: 'Cancelar envio',
+    message: `Confirma o cancelamento do envio do evento <strong>${esc(id)}</strong>? Essa ação não pode ser desfeita.`,
+    confirmLabel: 'Cancelar envio',
+    danger: true,
+    onConfirm: () => {
+      ev.status = 'cancelado'; ev.situacao = 'Envio cancelado pelo operador'; ev.resumo = 'Cancelado manualmente pelo operador.';
+      fecharDrawerEsoc();
+      renderTabsEsoc(); renderTabelaEsoc();
+      showToastEsoc('Envio cancelado.', 'success');
+    },
+  });
+}
+
+function cancelarLoteEsoc() {
+  const alvo = [...ESOC_SELECTED].map(id => EVENTOS_ESOC.find(e => e.id === id)).filter(elegivelCancelamentoEsoc);
+  showConfirmModal({
+    title: 'Cancelar envios em lote',
+    message: `Confirma o cancelamento de <strong>${alvo.length}</strong> envio${alvo.length > 1 ? 's' : ''} selecionado${alvo.length > 1 ? 's' : ''}? Essa ação não pode ser desfeita.`,
+    confirmLabel: 'Cancelar envios',
+    danger: true,
+    onConfirm: () => {
+      alvo.forEach(ev => { ev.status = 'cancelado'; ev.situacao = 'Envio cancelado pelo operador'; ev.resumo = 'Cancelado manualmente pelo operador.'; });
+      ESOC_SELECTED.clear();
+      renderTabsEsoc(); renderTabelaEsoc();
+      showToastEsoc(`${alvo.length} envio${alvo.length > 1 ? 's' : ''} cancelado${alvo.length > 1 ? 's' : ''}.`, 'success');
+    },
+  });
+}
+
+function validarManualEsoc(id) {
+  const ev = EVENTOS_ESOC.find(e => e.id === id);
+  const isDivergencia = !!ev.divergenciaAsync;
+  const aviso = isDivergencia
+    ? `<div style="display:flex;gap:8px;align-items:flex-start;background:var(--info-soft);border:1px solid #bfdbfe;border-radius:8px;padding:10px 12px;margin-bottom:10px;">
+      <i data-lucide="info" style="width:16px;height:16px;color:var(--brand-blue);flex-shrink:0;margin-top:1px;"></i>
+      <span style="font-size:12.5px;color:#1e3a8a;">O Autopilot não conseguiu confirmar automaticamente que essa competência já está aberta no eSocial (limitação do processamento assíncrono). Ao validar manualmente, você confirma que já verificou isso direto no eSocial — evita reenvio duplicado e conflito.</span>
+    </div>`
+    : `<div style="display:flex;gap:8px;align-items:flex-start;background:var(--warning-soft);border:1px solid #fde68a;border-radius:8px;padding:10px 12px;margin-bottom:10px;">
+      <i data-lucide="alert-triangle" style="width:16px;height:16px;color:var(--warning);flex-shrink:0;margin-top:1px;"></i>
+      <span style="font-size:12.5px;color:#92400e;">Este não é o caminho recomendado. Validar manualmente marca o evento como resolvido <strong>sem reenvio ao eSocial</strong> — use apenas quando tiver certeza de que a pendência já foi tratada por outro meio.</span>
+    </div>`;
+  showConfirmModal({
+    title: 'Validar manualmente' + (isDivergencia ? '' : ' (exceção)'),
+    message: `${aviso}Confirma a validação manual do evento <strong>${esc(id)}</strong>?`,
+    confirmLabel: isDivergencia ? 'Confirmar competência já aberta' : 'Validar mesmo assim',
+    danger: !isDivergencia,
+    onConfirm: () => {
+      ev.status = 'sucesso'; ev.tab = 'validados';
+      ev.situacao = isDivergencia ? 'Validado manualmente — competência já aberta no eSocial' : 'Validado manualmente pelo operador';
+      ev.resumo = isDivergencia ? 'Operador confirmou que a competência já estava aberta no eSocial (Autopilot não detectou por assincronismo).' : 'Marcado como resolvido manualmente (exceção).';
+      fecharDrawerEsoc();
+      renderTabsEsoc(); renderTabelaEsoc();
+      showToastEsoc('Evento validado manualmente.', 'warning');
+    },
+  });
+}
+
+function baixarXmlEsoc(id) { showToastEsoc(`Download simulado do XML do evento ${id}.`, 'success'); }
+function copiarTextoEsoc(texto, label) {
+  showToastEsoc(`${label || 'Conteúdo'} copiado para a área de transferência.`, 'success');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   DRAWER LATERAL — detalhamento do evento (pendência + erro + XML)
+   ═══════════════════════════════════════════════════════════════ */
+function garantirOverlaysEsoc() {
+  if (document.getElementById('esoc-drawer-overlay')) return;
+  const wrap = document.createElement('div');
+  wrap.innerHTML = `
+    <div class="esoc-drawer-overlay" id="esoc-drawer-overlay" onclick="fecharDrawerEsoc()"></div>
+    <div class="esoc-drawer" id="esoc-drawer">
+      <div class="esoc-drawer-header">
+        <div style="flex:1;min-width:0" id="esoc-drawer-header-content"></div>
+        <button class="btn btn-ghost btn-xs" onclick="fecharDrawerEsoc()"><i data-lucide="x" style="width:14px;height:14px"></i></button>
+      </div>
+      <div class="esoc-drawer-body" id="esoc-drawer-body"></div>
+      <div class="esoc-drawer-footer" id="esoc-drawer-footer"></div>
+    </div>`;
+  document.body.appendChild(wrap);
+}
+
+function _xmlMockEsoc(ev) {
+  const emp = empEsoc(ev.empresa), col = colabEsoc(ev.colab);
+  return `<evtAdmissao Id="ID${ev.id}">
+  <ideEmpregador>
+    <tpInsc>1</tpInsc>
+    <nrInsc>${emp.cnpj.replace(/\\D/g, '')}</nrInsc>
+  </ideEmpregador>
+  <trabalhador>
+    <cpfTrab>${col ? col.cpf.replace(/\\D/g, '') : '00000000000'}</cpfTrab>
+    <nmTrab>${col ? col.nome : '—'}</nmTrab>
+  </trabalhador>
+  <leiaute>${ev.leiaute}</leiaute>
+  <situacao>${esc(ev.situacao)}</situacao>
+</evtAdmissao>`;
+}
+
+function abrirDrawerEsoc(id) {
+  garantirOverlaysEsoc();
+  const ev = EVENTOS_ESOC.find(e => e.id === id);
+  if (!ev) return;
+  const emp = empEsoc(ev.empresa), col = colabEsoc(ev.colab), meta = STATUS_META_ESOC[ev.status];
+  const leiauteInfo = LEIAUTES_ESOC[ev.leiaute] || {};
+
+  document.getElementById('esoc-drawer-header-content').innerHTML = `
+    <div class="esoc-drawer-title">${esc(ev.leiaute)} · ${esc(leiauteInfo.desc || '')}</div>
+    <div class="esoc-drawer-sub">${esc(emp.nome)} · ${esc(emp.cnpj)}</div>
+    <div style="margin-top:6px;"><span class="badge badge-${meta.badge}">${esc(meta.label)}</span></div>`;
+
+  const cdBlock = `
+    <div class="esoc-drawer-block">
+      <div class="esoc-drawer-block-title"><i data-lucide="file-text" style="width:13px;height:13px;"></i>Detalhamento da pendência</div>
+      <div class="esoc-kv-grid">
+        <div class="esoc-kv"><label>Data/Hora</label><div class="val">D-${ev.diasAtras} · ${esc(ev.hora)}</div></div>
+        <div class="esoc-kv"><label>Leiaute</label><div class="val mono">${esc(ev.leiaute)}</div></div>
+        <div class="esoc-kv"><label>Situação</label><div class="val">${esc(ev.situacao)}</div></div>
+        <div class="esoc-kv"><label>Número do Recibo</label><div class="val mono ${!ev.recibo ? 'empty' : ''}">${ev.recibo ? esc(ev.recibo) : 'Não informado'}</div></div>
+        <div class="esoc-kv"><label>CNPJ Empregador</label><div class="val mono">${esc(emp.cnpj)}</div></div>
+        <div class="esoc-kv"><label>CPF Colaborador</label><div class="val mono ${!col ? 'empty' : ''}">${col ? esc(col.cpf) : 'Não aplicável'}</div></div>
+        <div class="esoc-kv" style="grid-column:1/-1;"><label>Identificador</label><div class="val mono">${esc(ev.id)}</div></div>
+      </div>
+      <div class="esoc-kv" style="margin-top:12px;"><label>Retorno</label><div class="val">${esc(ev.retorno || '—')}</div></div>
+      <div class="esoc-kv" style="margin-top:10px;"><label>Resumo</label><div class="val">${esc(ev.resumo)}</div></div>
+    </div>`;
+
+  const generica = ev.erro && /schema|genér/i.test(ev.erro.mensagem);
+  const ceBlock = ev.erro ? `
+    <div class="esoc-drawer-block err">
+      <div class="esoc-drawer-block-title"><i data-lucide="alert-octagon" style="width:13px;height:13px;"></i>Detalhamento do erro</div>
+      <div class="esoc-kv-grid">
+        <div class="esoc-kv"><label>Código do Erro</label><div class="val mono">${esc(ev.erro.codigo)}</div></div>
+        <div class="esoc-kv"><label>Tipo</label><div class="val">${esc(ev.erro.tipo)}</div></div>
+        <div class="esoc-kv" style="grid-column:1/-1;"><label>Mensagem</label><div class="val">${esc(ev.erro.mensagem)}</div></div>
+        <div class="esoc-kv"><label>Ocorrência</label><div class="val">${esc(ev.erro.ocorrencia)}</div></div>
+        <div class="esoc-kv"><label>Localização</label><div class="val mono ${!ev.erro.localizacao ? 'empty' : ''}">${ev.erro.localizacao ? esc(ev.erro.localizacao) : 'Não informada'}</div></div>
+      </div>
+      <div class="esoc-kv" style="margin-top:10px;">
+        <label>Mensagem Completa</label>
+        <div class="val">${esc(ev.erro.mensagemCompleta)}</div>
+        <button class="esoc-copy-btn" onclick="copiarTextoEsoc('${esc(ev.erro.mensagemCompleta)}','Mensagem completa')"><i data-lucide="copy" style="width:12px;height:12px;"></i>Copiar mensagem</button>
+      </div>
+      ${generica ? `<div class="esoc-generic-warning"><i data-lucide="info" style="width:14px;height:14px;flex-shrink:0;margin-top:1px;"></i><span>Mensagem genérica do eSocial — consulte o conteúdo do XML abaixo para identificar o campo exato da inconsistência.</span></div>` : ''}
+    </div>` : '';
+
+  const cxBlock = `
+    <div class="esoc-drawer-block">
+      <div class="esoc-drawer-block-title"><i data-lucide="code" style="width:13px;height:13px;"></i>Conteúdo do evento (XML)</div>
+      <input class="esoc-input esoc-xml-search" placeholder="Buscar dentro do XML…" oninput="_filtrarXmlEsoc(this.value)" />
+      <div class="esoc-xml-box" id="esoc-xml-box">${esc(_xmlMockEsoc(ev))}</div>
+      <div style="display:flex;gap:14px;margin-top:8px;">
+        <button class="esoc-copy-btn" onclick="copiarTextoEsoc('xml','Conteúdo XML')"><i data-lucide="copy" style="width:12px;height:12px;"></i>Copiar conteúdo</button>
+        <button class="esoc-copy-btn" onclick="baixarXmlEsoc('${esc(ev.id)}')"><i data-lucide="download" style="width:12px;height:12px;"></i>Baixar XML</button>
+      </div>
+    </div>`;
+
+  document.getElementById('esoc-drawer-body').innerHTML = cdBlock + ceBlock + cxBlock;
+
+  const podeReenviar = elegivelReenvioEsoc(ev);
+  const podeCancelar = elegivelCancelamentoEsoc(ev);
+  const podeValidarManual = ev.status === 'erro' || !!ev.divergenciaAsync;
+  const semAcao = !podeReenviar && !podeCancelar && !podeValidarManual;
+  document.getElementById('esoc-drawer-footer').innerHTML = `
+    ${podeReenviar ? `<button class="btn btn-primary" onclick="reenviarEsoc('${esc(ev.id)}')"><i data-lucide="rotate-cw" style="width:14px;height:14px;"></i>Reenviar</button>` : ''}
+    ${podeCancelar ? `<button class="btn btn-danger" onclick="cancelarEsoc('${esc(ev.id)}')"><i data-lucide="x" style="width:14px;height:14px;"></i>Cancelar envio</button>` : ''}
+    ${podeValidarManual ? `<button class="btn btn-ghost" onclick="validarManualEsoc('${esc(ev.id)}')" title="${ev.divergenciaAsync ? 'Confirma que a competência já está aberta no eSocial' : 'Marca como resolvido sem reenviar — usar com cautela'}"><i data-lucide="shield-check" style="width:14px;height:14px;"></i>Validar manualmente</button>` : ''}
+    <button class="btn btn-secondary" onclick="fecharDrawerEsoc()">Fechar</button>
+    ${semAcao ? `<span class="esoc-elig-note"><i data-lucide="lock" style="width:12px;height:12px;"></i>Nenhuma ação disponível — evento aguardando retorno do eSocial.</span>` : ''}
+  `;
+
+  document.getElementById('esoc-drawer-overlay').classList.add('open');
+  document.getElementById('esoc-drawer').classList.add('open');
+  refreshIcons();
+}
+
+function abrirDrawerXmlEsoc(id) {
+  garantirOverlaysEsoc();
+  const item = XML_LOGS_ESOC.find(x => x.id === id);
+  if (!item) return;
+  const emp = empEsoc(item.empresa), col = colabEsoc(item.colab), leiauteInfo = LEIAUTES_ESOC[item.leiaute] || {};
+  const n = Math.min(ESOC_XML_REVEAL[item.id] || 1, item.script.length);
+  document.getElementById('esoc-drawer-header-content').innerHTML = `
+    <div class="esoc-drawer-title">${esc(item.leiaute)} · ${esc(leiauteInfo.desc || '')}</div>
+    <div class="esoc-drawer-sub">${esc(emp.nome)} · ${esc(emp.cnpj)}</div>`;
+  document.getElementById('esoc-drawer-body').innerHTML = `
+    <div class="esoc-drawer-block">
+      <div class="esoc-drawer-block-title"><i data-lucide="terminal" style="width:13px;height:13px;"></i>Log de processamento</div>
+      <div class="esoc-xml-box">${item.script.slice(0, n).map(l => `<div>[${esc(dataHoraCompletaEsoc(item.diasAtras, l.t))}] ${esc(l.msg)}</div>`).join('')}</div>
+    </div>
+    <div class="esoc-drawer-block">
+      <div class="esoc-drawer-block-title"><i data-lucide="code" style="width:13px;height:13px;"></i>Conteúdo gerado até o momento</div>
+      <div class="esoc-xml-box">${esc(_xmlMockEsoc({ id: item.id, empresa: item.empresa, colab: item.colab, leiaute: item.leiaute, situacao: item.script[n - 1].msg }))}</div>
+    </div>`;
+  document.getElementById('esoc-drawer-footer').innerHTML = `
+    <button class="btn btn-secondary" onclick="baixarXmlEsoc('${esc(item.id)}')"><i data-lucide="download" style="width:14px;height:14px;"></i>Baixar XML parcial</button>
+    <button class="btn btn-ghost" onclick="fecharDrawerEsoc()">Fechar</button>`;
+  document.getElementById('esoc-drawer-overlay').classList.add('open');
+  document.getElementById('esoc-drawer').classList.add('open');
+  refreshIcons();
+}
+
+function fecharDrawerEsoc() {
+  const ov = document.getElementById('esoc-drawer-overlay'), dr = document.getElementById('esoc-drawer');
+  if (ov) ov.classList.remove('open');
+  if (dr) dr.classList.remove('open');
+}
+function _filtrarXmlEsoc(q) {
+  const box = document.getElementById('esoc-xml-box');
+  if (!box) return;
+  box.style.background = q ? '#232326' : '#18181b';
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   MONTAGEM DA TELA-RAIZ (chamado depois do boot do core — ver script no fim do body)
+   ═══════════════════════════════════════════════════════════════ */
+function _situacoesUnicasEsoc() { return [...new Set(EVENTOS_ESOC.map(e => e.situacao))].sort(); }
+
+function initPainelEsocial() {
+  const container = document.getElementById('screens-container');
+  const section = document.createElement('section');
+  section.className = 'screen hidden';
+  section.id = 'screen-esocial';
+  section.innerHTML = `
+    <div class="container-wide">
+      <div class="section-head" style="margin-bottom:4px;">
+        <div class="sh-title">Painel de Monitoramento eSocial</div>
+        <div class="sh-sub">Acompanhamento de eventos enviados ao eSocial — validação, erros e reenvio.</div>
+      </div>
+
+      <div id="esoc-filters-block" class="section-card" style="margin-bottom:16px;">
+        <div class="section-title"><i data-lucide="filter"></i>Filtros</div>
+        <div class="esoc-filter-grid">
+          <div class="esoc-field"><label>Competência de</label><select class="esoc-select" id="flt-competencia-de"></select></div>
+          <div class="esoc-field"><label>Competência até</label><select class="esoc-select" id="flt-competencia-ate"></select></div>
+          <div class="esoc-field"><label>Empresa</label><div class="esoc-ms" id="wrap-empresa"><div id="ms-empresa"></div></div></div>
+          <div class="esoc-field"><label>CNPJ Empregador</label><input class="esoc-input" id="flt-cnpj-emp" placeholder="00.000.000/0000-00" /></div>
+          <div class="esoc-field"><label>CPF Colaborador</label><input class="esoc-input" id="flt-cpf-colab" placeholder="000.000.000-00" /></div>
+          <div class="esoc-field"><label>Buscar em Retorno/Resumo</label><input class="esoc-input" id="flt-busca" placeholder="Buscar…" /></div>
+          <div class="esoc-field"><label>Leiaute</label><div class="esoc-ms" id="wrap-leiaute"><div id="ms-leiaute"></div></div></div>
+          <div class="esoc-field"><label>Situação</label><div class="esoc-ms" id="wrap-situacao"><div id="ms-situacao"></div></div></div>
+          <div class="esoc-field"><label>Ordenar por</label>
+            <select class="esoc-select" id="flt-ordenar">
+              <option value="status">Status (pendências primeiro)</option>
+              <option value="data">Data/Hora</option>
+              <option value="empresa">Empresa</option>
+            </select>
+          </div>
+          <div class="esoc-field"><label>Recibo Informado</label>
+            <select class="esoc-select" id="flt-recibo">
+              <option value="todos">Todos</option>
+              <option value="sim">Sim</option>
+              <option value="nao">Não</option>
+            </select>
+          </div>
+        </div>
+        <div class="esoc-toolbar-row">
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-primary" onclick="pesquisarEsoc()"><i data-lucide="search" style="width:14px;height:14px;"></i>Pesquisar</button>
+            <button class="btn btn-ghost" onclick="limparFiltrosEsoc()"><i data-lucide="eraser" style="width:14px;height:14px;"></i>Limpar filtros</button>
+          </div>
+          <div class="esoc-toolbar-actions">
+            <button class="btn btn-secondary" onclick="exportarConsultaEsoc()"><i data-lucide="download" style="width:14px;height:14px;"></i>Exportar</button>
+            <button class="btn btn-ghost" onclick="atualizarConsultaEsoc()"><i data-lucide="refresh-cw" style="width:14px;height:14px;"></i>Atualizar</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="esoc-tabs-wrap"><div class="esoc-tabs" id="esoc-tabs"></div></div>
+
+      <div id="esoc-table-normal">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+          <span class="esoc-total" id="esoc-total-label">Total: <strong>0</strong></span>
+          <button class="btn btn-ghost" style="font-size:12.5px;padding:6px 10px;" onclick="selecionarTodosElegiveisEsoc()"><i data-lucide="check-square" style="width:13px;height:13px;"></i>Selecionar todos elegíveis</button>
+        </div>
+        <div class="esoc-bulkbar" id="esoc-bulkbar">
+          <span class="cnt-txt" id="esoc-bulk-count"></span>
+          <div class="acts" id="esoc-bulk-acts"></div>
+        </div>
+        <div id="dt-esoc-eventos"></div>
+      </div>
+
+      <div id="esoc-table-validados" style="display:none;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+          <div class="esoc-subtabs" id="esoc-validados-subtabs" style="flex:1;"></div>
+          <div style="position:relative;" id="wrap-relatorio">
+            <button class="btn btn-secondary" style="font-size:12.5px;padding:8px 14px;white-space:nowrap;" onclick="event.stopPropagation(); toggleRelatorioMenuEsoc()"><i data-lucide="file-output" style="width:14px;height:14px;"></i>Emitir Relatório<i data-lucide="chevron-down" style="width:12px;height:12px;"></i></button>
+            <div class="flt-menu" id="relatorio-menu" style="display:none;left:auto;right:0;min-width:190px;">
+              <div class="flt-item" onclick="event.stopPropagation(); emitirRelatorioValidadosEsoc('pdf')"><i data-lucide="file-text" style="width:14px;height:14px;color:var(--text-tertiary);"></i><span>Relatório em PDF</span></div>
+              <div class="flt-item" onclick="event.stopPropagation(); emitirRelatorioValidadosEsoc('xlsx')"><i data-lucide="file-spreadsheet" style="width:14px;height:14px;color:var(--text-tertiary);"></i><span>Relatório em XLSX</span></div>
+            </div>
+          </div>
+        </div>
+        <div id="dt-esoc-validados"></div>
+      </div>
+
+      <div id="esoc-table-xml" style="display:none;">
+        <div class="esoc-log-feed" id="esoc-xml-logs"></div>
+      </div>
+    </div>`;
+  container.appendChild(section);
+
+  // Competência (mês/ano) — padrão: mês atual (MOCK_TODAY). Aplica junto com
+  // o resto dos filtros ao clicar "Pesquisar".
+  const competenciaOpts = competenciaOptionsEsoc();
+  const optsHtml = competenciaOpts.map(o => `<option value="${o.value}">${esc(o.label)}</option>`).join('');
+  const fltCompetenciaDe = document.getElementById('flt-competencia-de');
+  const fltCompetenciaAte = document.getElementById('flt-competencia-ate');
+  fltCompetenciaDe.innerHTML = optsHtml;
+  fltCompetenciaAte.innerHTML = optsHtml;
+  fltCompetenciaDe.value = competenciaOpts[0].value;
+  fltCompetenciaAte.value = competenciaOpts[0].value;
+  ESOC_FILTERS.competenciaDe = competenciaOpts[0].value;
+  ESOC_FILTERS.competenciaAte = competenciaOpts[0].value;
+
+  // Header do painel dentro da topbar do Cockpit (fica visível/fixo no topo).
+  const topbar = document.querySelector('.topbar');
+  if (topbar && !document.getElementById('esoc-topbar-title')) {
+    const titleEl = document.createElement('div');
+    titleEl.id = 'esoc-topbar-title';
+    titleEl.style.cssText = 'display:flex;align-items:center;gap:9px;font-size:15px;font-weight:700;color:var(--text-primary);';
+    titleEl.innerHTML = '<i data-lucide="radar" style="width:18px;height:18px;color:var(--brand-pink);"></i>Painel de Monitoramento eSocial';
+    topbar.insertBefore(titleEl, topbar.firstChild);
+  }
+
+  // Dropdowns multi-select (empresa / leiaute / situação)
+  msCreateEsoc('empresa', 'Todas as empresas', EMPRESAS_ESOC.map((e, i) => ({ value: String(i), label: e.nome })), new Set());
+  msCreateEsoc('leiaute', 'Todos os leiautes', Object.keys(LEIAUTES_ESOC).map(k => ({ value: k, label: `${k} · ${LEIAUTES_ESOC[k].desc}` })), new Set());
+  msCreateEsoc('situacao', 'Todas as situações', _situacoesUnicasEsoc().map(s => ({ value: s, label: s })), new Set());
+  msRenderEsoc('empresa'); msRenderEsoc('leiaute'); msRenderEsoc('situacao');
+
+  garantirOverlaysEsoc();
+  renderTabsEsoc();
+  renderTabelaEsoc();
+  refreshIcons();
+  showScreen('esocial');
+
+  // Deep-link de chegada: ?tab=<tabId>&evento=<id> — usado quando o operador
+  // chega a partir de uma tarefa do Autopilot que já aponta pro erro específico
+  // (ver tarefa-autopilot-esocial.html, botão "Ver no Painel eSocial").
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const tabParam = params.get('tab');
+    const eventoParam = params.get('evento');
+    if (tabParam && TABS_ESOC.some(t => t.id === tabParam)) switchTabEsoc(tabParam);
+    if (eventoParam) setTimeout(() => abrirDrawerEsoc(eventoParam), 80);
+  } catch (e) { /* sem parâmetros de URL, segue normal */ }
+}
+
+if (document.readyState === 'loading') {
+  // aguarda o _initCockpit do core (registrado antes deste listener, ver ordem dos <script> no fim do body)
+}
+</script>
+<!-- Ordem fixa dos arquivos do core; cockpit-07 (boot) sempre por último -->
+<script src="core/cockpit-01-shell.js"></script>
+<script src="core/cockpit-02-state-helpers.js"></script>
+<script src="core/cockpit-03-queue-home.js"></script>
+<script src="core/cockpit-04-task-detail.js"></script>
+<script src="core/cockpit-05-timeline-actions.js"></script>
+<script src="core/cockpit-06-execution.js"></script>
+<script src="core/cockpit-08-datatable.js"></script>
+<script src="core/cockpit-07-modals-init.js"></script>
+<script>
+/* Registrado DEPOIS de cockpit-07: garante que _initCockpit (shell + home)
+   já rodou antes de montarmos e exibirmos a tela do painel eSocial. */
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initPainelEsocial);
+} else {
+  initPainelEsocial();
+}
+</script>
+</body>
+</html>

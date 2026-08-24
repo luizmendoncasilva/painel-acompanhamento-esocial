@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=1280" />
+<title>Simulação Tarefa Autopilot · Protótipo</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* CSS específico desta tela. O card de decisão sim/não e a timeline padrão não
+   se aplicam a este fluxo (não é uma solicitação de cliente pra aprovar, é uma
+   falha do Autopilot já ocorrida) — ocultos aqui, sem editar core/. */
+#form-tabs, #form-edit-btn, #task-sla-inline, #task-deadline { display: none !important; }
+.decision-card { display: none !important; }
+#screen-task .timeline-horizontal { display: none; }
+#screen-task .section-card:has(> .timeline-horizontal) { display: none; }
+
+.esoc-ap-block { border-radius: 12px; padding: 18px 20px; margin-bottom: 16px; }
+.esoc-ap-block.done { background: var(--success-soft); border: 1px solid #bbf0cf; }
+.esoc-ap-block.fail { background: var(--danger-soft); border: 1px solid #fecaca; }
+.esoc-ap-block-title { font-size: 14px; font-weight: 700; color: var(--text-primary); margin-bottom: 10px; display: flex; align-items: center; gap: 7px; }
+.esoc-ap-block.fail .esoc-ap-block-title { color: #991b1b; }
+.esoc-ap-block.fail .esoc-ap-block-title i, .esoc-ap-block.fail .esoc-ap-block-title svg { color: var(--danger); }
+.esoc-ap-actor { margin-bottom: 10px; }
+.esoc-ap-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; }
+.esoc-ap-list li { display: flex; align-items: flex-start; gap: 8px; font-size: 13.5px; color: var(--text-primary); line-height: 1.45; }
+.esoc-ap-list li i, .esoc-ap-list li svg { width: 16px; height: 16px; flex-shrink: 0; margin-top: 1px; }
+.esoc-ap-list li.ok i, .esoc-ap-list li.ok svg { color: var(--success); }
+.esoc-ap-list li.fail i, .esoc-ap-list li.fail svg { color: var(--danger); }
+.esoc-ap-block.fail p { font-size: 13.5px; color: #7f1d1d; line-height: 1.55; margin: 0 0 12px; }
+.esoc-ap-errbox { background: #fff; border: 1px solid #fecaca; border-radius: 8px; padding: 12px 14px; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text-primary); line-height: 1.7; }
+.esoc-ap-errbox-label { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-tertiary); font-family: 'Inter', sans-serif; margin-bottom: 6px; }
+.esoc-ap-files { display: flex; gap: 8px; flex-wrap: wrap; margin: 14px 0 4px; }
+.esoc-ap-file { display: flex; align-items: center; gap: 8px; background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 7px 10px 7px 8px; font-size: 12.5px; }
+.esoc-ap-file .name { font-weight: 500; color: var(--text-primary); }
+
+.esoc-suggestion { display: flex; gap: 10px; align-items: flex-start; background: var(--info-soft); border: 1px solid #bfdbfe; border-radius: 8px; padding: 12px 14px; margin: 12px 0; }
+.esoc-suggestion .lbl { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #1e40af; margin-bottom: 3px; }
+.esoc-suggestion .txt { font-size: 13px; color: #1e3a8a; line-height: 1.5; }
+</style>
+</head>
+<body>
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   Protótipo isolado: 1 tarefa do DP criada pelo Autopilot após uma falha no
+   envio de um evento do eSocial. Abre na fila (entryScreen padrão) — o
+   operador clica "Pegar próxima tarefa" e o erro aparece na tela de validação.
+   O mesmo evento/erro está cadastrado em painel-esocial.html (EV-87903), e o
+   botão dentro do bloco de falha faz o deep-link pra lá (?tab=&evento=).
+   ═══════════════════════════════════════════════════════════════ */
+window.FLOW_CONFIG = {
+  module: 'dp',
+  operacaoLabel: 'Fechamento de Folha · Envio eSocial',
+  typeCode: 'envio_esocial_folha',
+  TYPE_METADATA: {
+    envio_esocial_folha: { icon: 'radar', label: 'Fechamento de Folha · Envio eSocial', desc: 'Processamento automático de fechamento de folha com envio de eventos ao eSocial', color: '#f25461' },
+  },
+  FORM_TABS_BY_TYPE: {
+    envio_esocial_folha: [{ id: 'resumo', label: 'Dados da Solicitação' }],
+  },
+  renderFormTab(tabId) {
+    if (tabId !== 'resumo') return '';
+    return `
+      <div class="esoc-ap-block done">
+        <div class="esoc-ap-block-title">O que já foi feito</div>
+        <div class="esoc-ap-actor"><span class="badge badge-neutral"><i data-lucide="bot" style="width:12px;height:12px;"></i> Autopilot</span></div>
+        <ul class="esoc-ap-list">
+          <li class="ok"><i data-lucide="check-circle"></i>Insumos consultados e localizados com sucesso: cadastros, rubricas e salários encontrados.</li>
+          <li class="ok"><i data-lucide="check-circle"></i>Conferência de colaboradores ativos concluída e ativos conferem com o headcount esperado.</li>
+          <li class="ok"><i data-lucide="check-circle"></i>Cálculo da folha concluído com variação dentro da faixa histórica de ±5%.</li>
+          <li class="fail"><i data-lucide="x-circle"></i>O envio do evento ao eSocial falhou e a transmissão não foi concluída.</li>
+        </ul>
+      </div>
+      <div class="esoc-ap-block fail">
+        <div class="esoc-ap-block-title"><i data-lucide="x-circle" style="width:16px;height:16px;"></i>Falha na transmissão do eSocial</div>
+        <p>Insumos, colaboradores ativos e cálculo conferiram normalmente (1º, 2º e 3º passos ok), mas no 4º passo o eSocial devolveu um evento rejeitado. O retorno aponta um colaborador com CBO (código de ocupação) inválido no evento de remuneração. Enquanto o evento não for corrigido e reenviado, a competência fica em aberto.</p>
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#991b1b;margin-bottom:6px;">Detalhamento do erro</div>
+        <div class="esoc-ap-errbox">
+          <div class="esoc-ap-errbox-label">Erro retornado pelo eSocial</div>
+          Evento: S-1200 (Remuneração)<br/>
+          Código: 301 — CBO inválido<br/>
+          Colaborador: Marina Alves (matrícula 0048)
+        </div>
+        <div class="esoc-suggestion">
+          <i data-lucide="lightbulb" style="width:16px;height:16px;color:#1e40af;flex-shrink:0;margin-top:1px;"></i>
+          <div>
+            <div class="lbl">Sugestão do Autopilot</div>
+            <div class="txt"><strong>Evento esperado:</strong> CBO 3071 (Auxiliar de Escritório) — cargo atual cadastrado para Marina Alves. O CBO enviado (0000) não corresponde a esse cadastro; verifique se houve alteração de cargo que não foi sincronizada com o eSocial antes de reenviar.</div>
+          </div>
+        </div>
+        <div class="esoc-ap-files">
+          <div class="esoc-ap-file"><i data-lucide="file-code" style="width:14px;height:14px;color:var(--text-tertiary);"></i><span class="name">Retorno_eSocial_S-1200.xml</span><span class="badge badge-danger" style="font-size:10px;">ERRO</span><i data-lucide="eye" style="width:13px;height:13px;color:var(--text-tertiary);cursor:pointer;"></i><i data-lucide="download" style="width:13px;height:13px;color:var(--text-tertiary);cursor:pointer;"></i></div>
+          <div class="esoc-ap-file"><i data-lucide="file-text" style="width:14px;height:14px;color:var(--text-tertiary);"></i><span class="name">Ocorrencias_eSocial.pdf</span><span class="badge badge-danger" style="font-size:10px;">ERRO</span><i data-lucide="eye" style="width:13px;height:13px;color:var(--text-tertiary);cursor:pointer;"></i><i data-lucide="download" style="width:13px;height:13px;color:var(--text-tertiary);cursor:pointer;"></i></div>
+        </div>
+        <div style="margin-top:14px;">
+          <a class="btn btn-primary" href="painel-esocial.html?tab=erros_preenchimento&evento=EV-87903" style="text-decoration:none;display:inline-flex;">
+            <i data-lucide="external-link" style="width:14px;height:14px;"></i>Ver no Painel eSocial
+          </a>
+        </div>
+      </div>
+
+      <div class="section-card">
+        <div class="section-title"><i data-lucide="code"></i>Conteúdo do evento (XML)</div>
+        <p style="font-size:12.5px;color:var(--text-secondary);margin:0 0 12px;">Conteúdo do evento montado pelo Autopilot antes do envio — útil para conferir o campo exato apontado pelo erro.</p>
+        <div class="esoc-ap-errbox" style="background:#18181b;color:#d4d4d8;border-color:#27272a;white-space:pre-wrap;">&lt;evtRemuneracao Id="ID1200000000000000000001"&gt;
+  &lt;ideEmpregador&gt;
+    &lt;tpInsc&gt;1&lt;/tpInsc&gt;
+    &lt;nrInsc&gt;12345678000190&lt;/nrInsc&gt;
+  &lt;/ideEmpregador&gt;
+  &lt;trabalhador&gt;
+    &lt;cpfTrab&gt;12345678901&lt;/cpfTrab&gt;
+    &lt;nmTrab&gt;Marina Alves Ferreira&lt;/nmTrab&gt;
+    &lt;matricula&gt;0048&lt;/matricula&gt;
+  &lt;/trabalhador&gt;
+  &lt;cargo&gt;
+    &lt;codCBO&gt;0000&lt;/codCBO&gt; <span style="color:#f87171;">&lt;!-- CBO inválido --&gt;</span>
+  &lt;/cargo&gt;
+  &lt;competencia&gt;2026-07&lt;/competencia&gt;
+&lt;/evtRemuneracao&gt;</div>
+      </div>
+    `;
+  },
+  getInitialState() {
+    return {
+      queue: [
+        {
+          id: 'DP-9231',
+          type: 'Fechamento de Folha · Envio eSocial — 07/2026',
+          typeCode: 'envio_esocial_folha',
+          flowHref: 'tarefa-autopilot-esocial.html',
+          clientName: 'Padaria São Luís Ltda',
+          cnpj: '12.345.678/0001-90',
+          logoText: 'PS',
+          sla: '2h',
+          slaStatus: 'risk',
+          receivedAt: '08:20',
+          createdDaysAgo: 0,
+          clientMessage: '',
+          senderName: 'Autopilot · Motor de Folha',
+          senderScopes: [],
+          origin: 'autopilot',
+          attachments: [],
+          formData: { abas: { resumo: {} } },
+        },
+      ],
+    };
+  },
+};
+</script>
+<!-- Ordem fixa dos arquivos do core; cockpit-07 (boot) sempre por último -->
+<script src="core/cockpit-01-shell.js"></script>
+<script src="core/cockpit-02-state-helpers.js"></script>
+<script src="core/cockpit-03-queue-home.js"></script>
+<script src="core/cockpit-04-task-detail.js"></script>
+<script src="core/cockpit-05-timeline-actions.js"></script>
+<script src="core/cockpit-06-execution.js"></script>
+<script src="core/cockpit-08-datatable.js"></script>
+<script src="core/cockpit-07-modals-init.js"></script>
+</body>
+</html>
