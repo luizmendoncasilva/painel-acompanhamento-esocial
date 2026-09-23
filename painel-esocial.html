@@ -52,7 +52,7 @@
    flt e pp do core só aqui, pra não destoar do resto da tela. */
 #screen-esocial .flt-item .flt-check { color: var(--brand-pink); }
 #screen-esocial .flt-search:focus { border-color: var(--brand-pink); }
-/* Competência de/até: mesma cor neutra dos outros gatilhos de filtro
+/* Data de/até: mesma cor neutra dos outros gatilhos de filtro
    (Empresa etc.), sem o destaque azul do core — sempre tem valor, então
    "selecionado" não é um estado especial aqui. */
 #screen-esocial .pp-btn.open,
@@ -98,21 +98,26 @@
 
 .esoc-resumo-cell { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; cursor: help; }
 
-/* Sem scroll horizontal: layout fixo + larguras percentuais somando 100% +
-   cabeçalhos podem quebrar linha em vez de forçar coluna larga. */
+/* Sem scroll horizontal: layout fixo + larguras percentuais somando 100%.
+   Cabeçalho pode quebrar em 2 linhas normalmente (não usamos reticências —
+   corta o nome da coluna e fica ilegível). O que não pode quebrar é o
+   conteúdo da linha (badge de status etc.), que é o que deixava a tabela
+   com linhas gigantes. */
 #screen-esocial .dt-scroll { overflow-x: hidden; }
 #screen-esocial .dt-table { table-layout: fixed; width: 100%; }
-#screen-esocial .dt-table th { white-space: normal; word-break: break-word; line-height: 1.3; }
+#screen-esocial .dt-table th { white-space: normal; word-break: normal; overflow-wrap: break-word; line-height: 1.3; vertical-align: bottom; }
 #screen-esocial .dt-table td { word-break: break-word; }
-#screen-esocial #dt-esoc-eventos .dt-table th:nth-child(1), #screen-esocial #dt-esoc-eventos .dt-table td:nth-child(1) { width: 3%; }
-#screen-esocial #dt-esoc-eventos .dt-table th:nth-child(2), #screen-esocial #dt-esoc-eventos .dt-table td:nth-child(2) { width: 13%; }
-#screen-esocial #dt-esoc-eventos .dt-table th:nth-child(3), #screen-esocial #dt-esoc-eventos .dt-table td:nth-child(3) { width: 9%; }
-#screen-esocial #dt-esoc-eventos .dt-table th:nth-child(4), #screen-esocial #dt-esoc-eventos .dt-table td:nth-child(4) { width: 14%; }
-#screen-esocial #dt-esoc-eventos .dt-table th:nth-child(5), #screen-esocial #dt-esoc-eventos .dt-table td:nth-child(5) { width: 11%; }
-#screen-esocial #dt-esoc-eventos .dt-table th:nth-child(6), #screen-esocial #dt-esoc-eventos .dt-table td:nth-child(6) { width: 15%; }
-#screen-esocial #dt-esoc-eventos .dt-table th:nth-child(7), #screen-esocial #dt-esoc-eventos .dt-table td:nth-child(7) { width: 9%; }
-#screen-esocial #dt-esoc-eventos .dt-table th:nth-child(8), #screen-esocial #dt-esoc-eventos .dt-table td:nth-child(8) { width: 15%; }
-#screen-esocial #dt-esoc-eventos .dt-table th:nth-child(9), #screen-esocial #dt-esoc-eventos .dt-table td:nth-child(9) { width: 11%; }
+#screen-esocial .dt-table .badge { white-space: nowrap; }
+#screen-esocial #dt-esoc-eventos .dt-table th:nth-child(1), #screen-esocial #dt-esoc-eventos .dt-table td:nth-child(1) { width: 11%; }
+#screen-esocial #dt-esoc-eventos .dt-table th:nth-child(2), #screen-esocial #dt-esoc-eventos .dt-table td:nth-child(2) { width: 9%; }
+#screen-esocial #dt-esoc-eventos .dt-table th:nth-child(3), #screen-esocial #dt-esoc-eventos .dt-table td:nth-child(3) { width: 7%; }
+#screen-esocial #dt-esoc-eventos .dt-table th:nth-child(4), #screen-esocial #dt-esoc-eventos .dt-table td:nth-child(4) { width: 10%; }
+#screen-esocial #dt-esoc-eventos .dt-table th:nth-child(5), #screen-esocial #dt-esoc-eventos .dt-table td:nth-child(5) { width: 8%; }
+#screen-esocial #dt-esoc-eventos .dt-table th:nth-child(6), #screen-esocial #dt-esoc-eventos .dt-table td:nth-child(6) { width: 9%; }
+#screen-esocial #dt-esoc-eventos .dt-table th:nth-child(7), #screen-esocial #dt-esoc-eventos .dt-table td:nth-child(7) { width: 11%; }
+#screen-esocial #dt-esoc-eventos .dt-table th:nth-child(8), #screen-esocial #dt-esoc-eventos .dt-table td:nth-child(8) { width: 8%; }
+#screen-esocial #dt-esoc-eventos .dt-table th:nth-child(9), #screen-esocial #dt-esoc-eventos .dt-table td:nth-child(9) { width: 12%; }
+#screen-esocial #dt-esoc-eventos .dt-table th:nth-child(10), #screen-esocial #dt-esoc-eventos .dt-table td:nth-child(10) { width: 15%; }
 #screen-esocial #dt-esoc-xml .dt-table th:nth-child(1), #screen-esocial #dt-esoc-xml .dt-table td:nth-child(1) { width: 28%; }
 #screen-esocial #dt-esoc-xml .dt-table th:nth-child(2), #screen-esocial #dt-esoc-xml .dt-table td:nth-child(2) { width: 22%; }
 #screen-esocial #dt-esoc-xml .dt-table th:nth-child(3), #screen-esocial #dt-esoc-xml .dt-table td:nth-child(3) { width: 22%; }
@@ -187,14 +192,16 @@ window.FLOW_CONFIG = {
 /* ═══════════════════════════════════════════════════════════════
    DADOS MOCK
    ═══════════════════════════════════════════════════════════════ */
+// erp/licenca: sistema de folha operado pela empresa e nº da licença (base
+// dos eventos gerados). origem: mesmo padrão exibido no Gestor de Tarefas.
 const EMPRESAS_ESOC = [
-  { nome: 'Padaria São Luís Ltda', cnpj: '12.345.678/0001-90' },
-  { nome: 'Grupo Alvorada Comércio', cnpj: '23.456.789/0001-11' },
-  { nome: 'Metalúrgica Boa Vista', cnpj: '34.567.890/0001-22' },
-  { nome: 'Clínica Vitalis', cnpj: '45.678.901/0001-33' },
-  { nome: 'Transportes Rio Claro', cnpj: '56.789.012/0001-44' },
-  { nome: 'Distribuidora Nova Era', cnpj: '67.890.123/0001-55' },
-  { nome: 'Tech Solutions Digital', cnpj: '12.ABC.345/01DE-35' },
+  { nome: 'Padaria São Luís Ltda', cnpj: '12.345.678/0001-90', erp: 'Domínio', licenca: '85223', origem: 'BHub' },
+  { nome: 'Grupo Alvorada Comércio', cnpj: '23.456.789/0001-11', erp: 'Domínio', licenca: '143257', origem: 'Carnevale' },
+  { nome: 'Metalúrgica Boa Vista', cnpj: '34.567.890/0001-22', erp: 'Domínio', licenca: '143257', origem: 'Carnevale' },
+  { nome: 'Clínica Vitalis', cnpj: '45.678.901/0001-33', erp: 'Domínio', licenca: '85223', origem: 'BHub' },
+  { nome: 'Transportes Rio Claro', cnpj: '56.789.012/0001-44', erp: 'Domínio', licenca: '143257', origem: 'Carnevale' },
+  { nome: 'Distribuidora Nova Era', cnpj: '67.890.123/0001-55', erp: 'Domínio', licenca: '85223', origem: 'BHub' },
+  { nome: 'Tech Solutions Digital', cnpj: '12.ABC.345/01DE-35', erp: 'Domínio', licenca: '85223', origem: 'BHub' },
 ];
 const COLABS_ESOC = [
   { nome: 'Marina Alves Ferreira', cpf: '123.456.789-01' },
@@ -214,12 +221,12 @@ const LEIAUTES_ESOC = {
   'S-2210': { desc: 'Comunicação de Acidente de Trabalho', classe: 'sst' },
 };
 
-function _mkEv(o) { return Object.assign({ recibo: '', cpfColaborador: '', erro: null }, o); }
+function _mkEv(o) { return Object.assign({ recibo: '', cpfColaborador: '', erro: null, tipoEnvio: 'Inclusão', motivoAdvertencia: '' }, o); }
 const EVENTOS_ESOC = [
   // ── Em Processamento (aguardando retorno do eSocial) ──
   _mkEv({ id: 'EV-88010', tab: 'processamento', status: 'aguardando_retorno', leiaute: 'S-2200', empresa: 0, colab: 0, diasAtras: 0, hora: '08:12', situacao: 'Enviado, aguardando retorno do eSocial', retorno: '', resumo: 'Lote enviado ao ambiente de produção do eSocial.' }),
   _mkEv({ id: 'EV-88011', tab: 'processamento', status: 'aguardando_retorno', leiaute: 'S-1200', empresa: 1, colab: null, diasAtras: 0, hora: '08:15', situacao: 'Enviado, aguardando retorno do eSocial', retorno: '', resumo: 'Lote de remuneração enviado, aguardando processamento.' }),
-  _mkEv({ id: 'EV-88012', tab: 'processamento', status: 'aguardando_retorno', leiaute: 'S-2206', empresa: 2, colab: 2, diasAtras: 1, hora: '17:40', situacao: 'Enviado, aguardando retorno do eSocial', retorno: '', resumo: 'Alteração contratual enviada, aguardando retorno.' }),
+  _mkEv({ id: 'EV-88012', tab: 'processamento', status: 'aguardando_retorno', leiaute: 'S-2206', empresa: 2, colab: 2, diasAtras: 1, hora: '17:40', situacao: 'Enviado, aguardando retorno do eSocial', retorno: '', resumo: 'Alteração contratual enviada, aguardando retorno.', tipoEnvio: 'Alteração' }),
   _mkEv({ id: 'EV-88013', tab: 'processamento', status: 'aguardando_retorno', leiaute: 'S-1005', empresa: 3, colab: null, diasAtras: 1, hora: '09:02', situacao: 'Enviado, aguardando retorno do eSocial', retorno: '', resumo: 'Tabela de estabelecimento enviada.' }),
   _mkEv({ id: 'EV-88014', tab: 'processamento', status: 'aguardando_retorno', leiaute: 'S-1200', empresa: 5, colab: null, diasAtras: 0, hora: '08:40', situacao: 'Aguardando confirmação — possível divergência com o eSocial', retorno: '', resumo: 'Autopilot não conseguiu confirmar automaticamente se a competência já está aberta no eSocial.',
     divergenciaAsync: true }),
@@ -227,11 +234,11 @@ const EVENTOS_ESOC = [
   // ── Validados ──
   _mkEv({ id: 'EV-87990', tab: 'validados', status: 'sucesso', leiaute: 'S-2200', empresa: 0, colab: 1, diasAtras: 2, hora: '10:22', situacao: 'Aceito com sucesso', retorno: 'Evento processado e aceito pelo eSocial sem inconsistências.', resumo: 'Admissão aceita com sucesso.', recibo: '1.2.202608080001234567-89' }),
   _mkEv({ id: 'EV-87991', tab: 'validados', status: 'sucesso', leiaute: 'S-2299', empresa: 4, colab: 3, diasAtras: 2, hora: '11:05', situacao: 'Aceito com sucesso', retorno: 'Evento de desligamento processado e aceito pelo eSocial.', resumo: 'Desligamento aceito com sucesso.', recibo: '1.2.202608080004455667-12' }),
-  _mkEv({ id: 'EV-87992', tab: 'validados', status: 'sucesso_advertencia', leiaute: 'S-1200', empresa: 1, colab: null, diasAtras: 2, hora: '11:40', situacao: 'Aceito com advertência', retorno: 'Evento aceito, porém com advertência: valores de FGTS próximos ao limite de tolerância.', resumo: 'Remuneração aceita com advertência de FGTS.', recibo: '1.2.202608080009988776-34' }),
+  _mkEv({ id: 'EV-87992', tab: 'validados', status: 'sucesso_advertencia', leiaute: 'S-1200', empresa: 1, colab: null, diasAtras: 2, hora: '11:40', situacao: 'Aceito com advertência', retorno: 'Evento aceito, porém com advertência: valores de FGTS próximos ao limite de tolerância.', resumo: 'Remuneração aceita com advertência de FGTS.', recibo: '1.2.202608080009988776-34', motivoAdvertencia: 'Valores de FGTS próximos ao limite de tolerância.' }),
   _mkEv({ id: 'EV-87993', tab: 'validados', status: 'sucesso', leiaute: 'S-2230', empresa: 5, colab: 4, diasAtras: 3, hora: '14:12', situacao: 'Aceito com sucesso', retorno: 'Evento de afastamento processado e aceito pelo eSocial.', resumo: 'Afastamento temporário aceito.', recibo: '1.2.202608070002233445-67' }),
-  _mkEv({ id: 'EV-87994', tab: 'validados', status: 'sucesso', leiaute: 'S-1210', empresa: 2, colab: null, diasAtras: 3, hora: '15:30', situacao: 'Aceito com sucesso', retorno: 'Evento de pagamento processado e aceito pelo eSocial.', resumo: 'Pagamento de rendimentos aceito.', recibo: '1.2.202608070007766554-90' }),
+  _mkEv({ id: 'EV-87994', tab: 'validados', status: 'sucesso', leiaute: 'S-1210', empresa: 2, colab: null, diasAtras: 3, hora: '15:30', situacao: 'Aceito com sucesso', retorno: 'Evento de pagamento processado e aceito pelo eSocial.', resumo: 'Pagamento de rendimentos aceito.', recibo: '1.2.202608070007766554-90', tipoEnvio: 'Retificação' }),
   _mkEv({ id: 'EV-87995', tab: 'validados', status: 'sucesso', leiaute: 'S-2210', empresa: 3, colab: 1, diasAtras: 0, hora: '09:40', situacao: 'Aceito com sucesso', retorno: 'Evento de comunicação de acidente de trabalho processado e aceito pelo eSocial.', resumo: 'CAT aceita com sucesso.', recibo: '1.2.202608100003321445-21' }),
-  _mkEv({ id: 'EV-87996', tab: 'validados', status: 'sucesso', leiaute: 'S-1005', empresa: 4, colab: null, diasAtras: 5, hora: '08:10', situacao: 'Aceito com sucesso', retorno: 'Tabela de estabelecimento processada e aceita pelo eSocial.', resumo: 'Tabela aceita com sucesso.', recibo: '1.2.202608050001112233-45' }),
+  _mkEv({ id: 'EV-87996', tab: 'validados', status: 'sucesso', leiaute: 'S-1005', empresa: 4, colab: null, diasAtras: 5, hora: '08:10', situacao: 'Aceito com sucesso', retorno: 'Tabela de estabelecimento processada e aceita pelo eSocial.', resumo: 'Tabela aceita com sucesso.', recibo: '1.2.202608050001112233-45', tipoEnvio: 'Exclusão' }),
 
   // ── Invalidados (erro de validação) ──
   _mkEv({ id: 'EV-87950', tab: 'invalidados', status: 'erro', leiaute: 'S-2200', empresa: 0, colab: 2, diasAtras: 1, hora: '09:18', situacao: 'Rejeitado - erro de validação de schema', retorno: 'O evento não passou na validação de schema do XML.', resumo: 'Rejeitado por erro de schema XML.',
@@ -359,15 +366,21 @@ const STATUS_META_ESOC = {
 let ESOC_ACTIVE_TAB = 'processamento';
 const ESOC_SELECTED = new Set();
 const ESOC_FILTERS = {
-  empresas: new Set(), leiautes: new Set(), situacoes: new Set(),
-  cnpjEmpregador: '', cpfColaborador: '', busca: '', competenciaDe: '', competenciaAte: '',
+  empresas: new Set(), leiautes: new Set(), situacoes: new Set(), origens: new Set(),
+  cnpjEmpregador: '', cpfColaborador: '', busca: '', tipoData: 'competencia', dataDe: '', dataAte: '',
   ordenarPor: 'status', reciboInformado: 'todos',
 };
 
 /* ═══════════════════════════════════════════════════════════════
    HELPERS DE DADOS
    ═══════════════════════════════════════════════════════════════ */
-function empEsoc(idx) { return EMPRESAS_ESOC[idx] || { nome: '—', cnpj: '' }; }
+function empEsoc(idx) { return EMPRESAS_ESOC[idx] || { nome: '—', cnpj: '', erp: '—', licenca: '—', origem: '—' }; }
+// Bloco padrão "CNPJ - Origem: X / ERP operado: Y - Licença Z", igual ao
+// exibido no Gestor de Tarefas — reaproveitado em todos os pontos que
+// mostram dados da empresa (tabelas + drawer).
+function empBlocoEsoc(emp) {
+  return `<div class="dt-td-mono" style="font-size:10.5px;color:var(--text-tertiary);">${esc(emp.cnpj)} - Origem: ${esc(emp.origem)}</div><div style="font-size:10.5px;color:var(--text-tertiary);">ERP operado: ${esc(emp.erp)} - Licença ${esc(emp.licenca)}</div>`;
+}
 function colabEsoc(idx) { return idx == null ? null : COLABS_ESOC[idx]; }
 // RF-018: normaliza CNPJ/CPF antes de comparar, aceitando com ou sem máscara/pontuação.
 function _normDocEsoc(s) { return (s || '').toUpperCase().replace(/[^0-9A-Z]/g, ''); }
@@ -375,33 +388,29 @@ function elegivelReenvioEsoc(ev) { return ['erro', 'aguardando_envio', 'cancelad
 function elegivelCancelamentoEsoc(ev) { return ev.status === 'aguardando_envio'; }
 function eventosDoTabEsoc(tab) { return EVENTOS_ESOC.filter(e => e.tab === tab); }
 
-// Filtro de competência: data avulsa de/até (dd/mm/aaaa), comparada contra
-// a data real do evento (diasAtras + MOCK_TODAY, ver core).
-const MES_ABREV_ESOC = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-function competenciaOptionsEsoc() {
-  const opts = [];
-  let ano = MOCK_TODAY.ano, mes = MOCK_TODAY.mes;
-  for (let i = 0; i < 8; i++) {
-    opts.push({ value: String(mes).padStart(2, '0') + '/' + ano, label: MES_ABREV_ESOC[mes - 1] + '/' + ano });
-    mes--; if (mes === 0) { mes = 12; ano--; }
-  }
-  return opts;
-}
+// "Tipo de data" = Competência ou Data de envio, aplicado ao mesmo par de
+// campos "Data de"/"Data até" (data avulsa dd/mm/aaaa). Competência compara
+// só mês/ano do evento; Data de envio compara a data completa.
 function _dataEventoEsoc(ev) { return _ppStrip(_ppDaysAgo(ev.diasAtras)); }
+function _competenciaChaveEsoc(d) { return d.getFullYear() * 100 + (d.getMonth() + 1); }
+function _fmtCompetenciaEsoc(d) { return String(d.getMonth() + 1).padStart(2, '0') + '/' + d.getFullYear(); }
 
 function _passaFiltrosEsoc(ev) {
   const f = ESOC_FILTERS;
   if (f.empresas.size && !f.empresas.has(String(ev.empresa))) return false;
   if (f.leiautes.size && !f.leiautes.has(ev.leiaute)) return false;
   if (f.situacoes.size && !f.situacoes.has(ev.situacao)) return false;
-  if (f.competenciaDe || f.competenciaAte) {
-    // RN-014: a troca de "Filtrar de"/"Filtrar até" quando invertidos já ocorre
+  if (f.origens.size && !f.origens.has(empEsoc(ev.empresa).origem)) return false;
+  if (f.dataDe || f.dataAte) {
+    // RN-014: a troca de "Data de"/"Data até" quando invertidos já ocorre
     // na interface (ver pesquisarEsoc), então aqui os dois já chegam ordenados.
+    const isCompetencia = f.tipoData === 'competencia';
     const evData = _dataEventoEsoc(ev);
-    const de = f.competenciaDe ? _ppStrip(f.competenciaDe) : null;
-    const ate = f.competenciaAte ? _ppStrip(f.competenciaAte) : null;
-    if (de && evData < de) return false;
-    if (ate && evData > ate) return false;
+    const alvo = isCompetencia ? _competenciaChaveEsoc(evData) : evData;
+    const de = f.dataDe ? (isCompetencia ? _competenciaChaveEsoc(_ppStrip(f.dataDe)) : _ppStrip(f.dataDe)) : null;
+    const ate = f.dataAte ? (isCompetencia ? _competenciaChaveEsoc(_ppStrip(f.dataAte)) : _ppStrip(f.dataAte)) : null;
+    if (de && alvo < de) return false;
+    if (ate && alvo > ate) return false;
   }
   if (f.cnpjEmpregador && !_normDocEsoc(empEsoc(ev.empresa).cnpj).includes(_normDocEsoc(f.cnpjEmpregador))) return false;
   if (f.cpfColaborador) {
@@ -512,9 +521,10 @@ document.addEventListener('click', (e) => {
 });
 
 /* ═══════════════════════════════════════════════════════════════
-   DATA AVULSA "Competência de/até" — visual pp-btn/pp-pop do core,
+   DATA AVULSA "Data de/até" — visual pp-btn/pp-pop do core,
    só o calendário (sem a barra de presets). Cada campo guarda UMA
-   data (dd/mm/aaaa).
+   data (dd/mm/aaaa). Usado tanto para Competência quanto Data de
+   envio, a depender do seletor "Tipo de data" (ver ESOC_FILTERS.tipoData).
    ═══════════════════════════════════════════════════════════════ */
 const _sdEsoc = {}; // registry: id -> { value: Date|null, calMonth, open }
 function sdCreateEsoc(id, initialValue) {
@@ -630,22 +640,16 @@ function switchTabEsoc(tabId) {
 
 function colunasEsoc() {
   return [
-    {
-      key: 'sel', label: '', render: (row) => {
-        const elig = elegivelReenvioEsoc(row) || elegivelCancelamentoEsoc(row);
-        const checked = ESOC_SELECTED.has(row.id);
-        if (!elig) return `<input type="checkbox" class="dt-checkbox esoc-checkbox-disabled" disabled title="Evento aguardando retorno do eSocial — nenhuma ação disponível" />`;
-        return `<input type="checkbox" class="dt-checkbox" ${checked ? 'checked' : ''} onclick="event.stopPropagation(); toggleSelEsoc('${row.id}')" />`;
-      },
-    },
     { key: 'status', label: 'Status', render: (row) => { const m = STATUS_META_ESOC[row.status]; return `<span class="badge badge-${m.badge}">${esc(m.label)}</span>${row.status === 'sucesso_advertencia' ? ' <i data-lucide="alert-triangle" style="width:12px;height:12px;color:var(--warning);vertical-align:-1px;"></i>' : ''}<div class="dt-td-mono" style="font-size:10px;color:var(--text-tertiary);margin-top:3px;">${esc(row.id)}</div>`; } },
-    { key: 'dataHora', label: 'Data/Hora', render: (row) => `<span style="white-space:nowrap;">D-${row.diasAtras} · ${esc(row.hora)}</span>` },
-    { key: 'leiaute', label: 'Leiaute', render: (row) => `<span class="esoc-leiaute-code" title="${esc((LEIAUTES_ESOC[row.leiaute] || {}).desc || '')}">${esc(row.leiaute)}</span><div class="esoc-leiaute-desc">${esc((LEIAUTES_ESOC[row.leiaute] || {}).desc || '')}</div>` },
+    { key: 'dataHora', label: 'Data/Hora', render: (row) => `<span style="white-space:nowrap;">${esc(dataHoraCompletaEsoc(row.diasAtras, row.hora))}</span>` },
+    { key: 'competencia', label: 'Competência', render: (row) => `<span style="white-space:nowrap;">${esc(_fmtCompetenciaEsoc(_ppDaysAgo(row.diasAtras)))}</span>` },
+    { key: 'leiaute', label: 'Evento', render: (row) => `<span class="esoc-leiaute-code" title="${esc((LEIAUTES_ESOC[row.leiaute] || {}).desc || '')}">${esc(row.leiaute)}</span><div class="esoc-leiaute-desc">${esc((LEIAUTES_ESOC[row.leiaute] || {}).desc || '')}</div>` },
+    { key: 'tipoEnvio', label: 'Tipo de Envio', render: (row) => esc(row.tipoEnvio) },
     { key: 'recibo', label: 'Recibo', mono: true, render: (row) => row.recibo ? `<span class="dt-td-mono">${esc(row.recibo)}</span>` : '<span style="color:var(--text-tertiary);">—</span>' },
-    { key: 'situacao', label: 'Situação' },
+    { key: 'situacao', label: 'Situação', render: (row) => `<span class="esoc-resumo-cell" title="${esc(row.situacao)}">${esc(row.situacao)}</span>` },
     { key: 'retorno', label: 'Retorno', render: (row) => row.retorno ? `<span class="esoc-retorno-link" onclick="event.stopPropagation(); abrirDrawerEsoc('${row.id}')">Ver detalhes</span>` : '<span style="color:var(--text-tertiary);">—</span>' },
     { key: 'resumo', label: 'Resumo', render: (row) => `<span class="esoc-resumo-cell" title="${esc(row.resumo)}">${esc(row.resumo)}</span>` },
-    { key: 'contribuinte', label: 'Empregador / Colaborador', render: (row) => { const c = colabEsoc(row.colab); return `<div class="dt-td-mono" style="font-size:11px;">${esc(empEsoc(row.empresa).cnpj)}</div>${c ? `<div class="dt-td-mono" style="font-size:10.5px;color:var(--text-tertiary);margin-top:2px;">${esc(c.cpf)}</div>` : ''}`; } },
+    { key: 'contribuinte', label: 'Empregador / Colaborador', render: (row) => { const emp = empEsoc(row.empresa); const c = colabEsoc(row.colab); return `<div style="font-size:11.5px;font-weight:600;">${esc(emp.nome)}</div>${empBlocoEsoc(emp)}${c ? `<div style="font-size:11px;margin-top:3px;">${esc(c.nome)}</div><div class="dt-td-mono" style="font-size:10.5px;color:var(--text-tertiary);">${esc(c.cpf)}</div>` : ''}`; } },
   ];
 }
 
@@ -736,20 +740,28 @@ function renderValidadosSubtabsEsoc() {
 function _linhasValidadasSubEsoc(subId) {
   return _linhasFiltradasTabEsoc('validados').filter(ev => {
     if (subId === 'advertencias') return ev.status === 'sucesso_advertencia';
+    // Evento com advertência aparece só na sub-aba Advertências, evitando duplicidade.
+    if (ev.status === 'sucesso_advertencia') return false;
     return (LEIAUTES_ESOC[ev.leiaute] || {}).classe === subId;
   });
 }
 
 function renderValidadosTableEsoc() {
   const rows = _linhasValidadasSubEsoc(ESOC_VALIDADOS_SUB);
+  const isAdvertencias = ESOC_VALIDADOS_SUB === 'advertencias';
   const cols = [
     { key: 'status', label: 'Status', render: (r) => { const m = STATUS_META_ESOC[r.status]; return `<span class="badge badge-${m.badge}">${esc(m.label)}</span>`; } },
-    { key: 'empresa', label: 'Empresa', render: (r) => `<div>${esc(empEsoc(r.empresa).nome)}</div><div class="dt-td-mono" style="font-size:11px;color:var(--text-tertiary);">${esc(empEsoc(r.empresa).cnpj)}</div>` },
+    { key: 'empresa', label: 'Empresa', render: (r) => { const emp = empEsoc(r.empresa); return `<div>${esc(emp.nome)}</div>${empBlocoEsoc(emp)}`; } },
+    { key: 'colaborador', label: 'Dados do Colaborador', render: (r) => { const c = colabEsoc(r.colab); return c ? `<div>${esc(c.nome)}</div><div class="dt-td-mono" style="font-size:11px;color:var(--text-tertiary);">${esc(c.cpf)}</div>` : '<span style="color:var(--text-tertiary);">Não aplicável</span>'; } },
     { key: 'evento', label: 'Evento', render: (r) => `<span class="esoc-leiaute-code">${esc(r.leiaute)}</span><div class="esoc-leiaute-desc">${esc((LEIAUTES_ESOC[r.leiaute] || {}).desc || '')}</div>` },
-    { key: 'dataEnvio', label: 'Data Envio', render: (r) => `D-${r.diasAtras} · ${esc(r.hora)}` },
-    { key: 'tipoEnvio', label: 'Tipo de Envio', render: () => 'Inclusão' },
+    { key: 'competencia', label: 'Competência', render: (r) => esc(_fmtCompetenciaEsoc(_ppDaysAgo(r.diasAtras))) },
+    { key: 'dataEnvio', label: 'Data Envio', render: (r) => esc(dataHoraCompletaEsoc(r.diasAtras, r.hora)) },
+    { key: 'tipoEnvio', label: 'Tipo de Envio', render: (r) => esc(r.tipoEnvio) },
     { key: 'recibo', label: 'Nº Recibo', mono: true, render: (r) => r.recibo ? `<span class="dt-td-mono">${esc(r.recibo)}</span>` : '<span style="color:var(--text-tertiary);">—</span>' },
   ];
+  if (isAdvertencias) {
+    cols.push({ key: 'motivo', label: 'Motivo da Advertência', render: (r) => `<span class="esoc-resumo-cell" title="${esc(r.motivoAdvertencia || r.retorno)}">${esc(r.motivoAdvertencia || r.retorno)}</span>` });
+  }
   if (!_dt['esoc-validados']) {
     // RF-080 / 6.6.6: a aba Validados não oferece link de detalhe — o painel
     // de detalhe não é aberto a partir desta tabela (sem onRowClick).
@@ -851,10 +863,11 @@ function emitirRelatorioValidadosEsoc(formato) {
   const empresasEnvolvidas = [...new Set(rows.map(r => r.empresa))];
   const empresaLabel = empresasEnvolvidas.length === 1 ? empEsoc(empresasEnvolvidas[0]).nome : 'Consolidado — Múltiplas Empresas';
   const cnpjLabel = empresasEnvolvidas.length === 1 ? empEsoc(empresasEnvolvidas[0]).cnpj : '—';
-  const opts = competenciaOptionsEsoc();
-  const compDeLabel = (opts.find(o => o.value === ESOC_FILTERS.competenciaDe) || {}).label;
-  const compAteLabel = (opts.find(o => o.value === ESOC_FILTERS.competenciaAte) || {}).label;
-  const competenciaLabel = compDeLabel && compAteLabel ? (compDeLabel === compAteLabel ? compDeLabel : `${compDeLabel} – ${compAteLabel}`) : 'Todas';
+  const periodoRotulo = ESOC_FILTERS.tipoData === 'envio' ? 'Período de envio' : 'Competência';
+  const fmtPeriodo = ESOC_FILTERS.tipoData === 'envio' ? _sdFmtFullEsoc : _fmtCompetenciaEsoc;
+  const periodoLabel = (ESOC_FILTERS.dataDe || ESOC_FILTERS.dataAte)
+    ? `${ESOC_FILTERS.dataDe ? fmtPeriodo(ESOC_FILTERS.dataDe) : '…'} – ${ESOC_FILTERS.dataAte ? fmtPeriodo(ESOC_FILTERS.dataAte) : '…'}`
+    : 'Todas';
   const agora = new Date();
   const emissao = `${String(agora.getDate()).padStart(2, '0')}/${String(agora.getMonth() + 1).padStart(2, '0')}/${agora.getFullYear()} ${String(agora.getHours()).padStart(2, '0')}:${String(agora.getMinutes()).padStart(2, '0')}:${String(agora.getSeconds()).padStart(2, '0')}`;
 
@@ -875,7 +888,7 @@ function emitirRelatorioValidadosEsoc(formato) {
           <td>${esc(r.leiaute)} ${esc((LEIAUTES_ESOC[r.leiaute] || {}).desc || '')}</td>
           <td>${_relatorioDataFmtEsoc(r.diasAtras)}</td>
           <td>—</td>
-          <td>Inclusão</td>
+          <td>${esc(r.tipoEnvio)}</td>
           <td class="secundario">${r.recibo ? esc(r.recibo) : '—'}</td>
           <td>${_relatorioValidacaoEsoc(r)}</td>
           <td>Não</td>
@@ -891,7 +904,7 @@ function emitirRelatorioValidadosEsoc(formato) {
           <div class="cabecalho-grid">
             <span><span class="label">Empresa: </span><span class="value">${esc(empresaLabel)}</span></span>
             <span class="cabecalho-col-right"><span class="label">CNPJ: </span><span class="value">${esc(cnpjLabel)}</span></span>
-            <span><span class="label">Competência: </span><span class="value">${esc(competenciaLabel)}</span></span>
+            <span><span class="label">${esc(periodoRotulo)}: </span><span class="value">${esc(periodoLabel)}</span></span>
             <span class="cabecalho-col-right"><span class="label">Emissão: </span><span class="value">${esc(emissao)}</span></span>
           </div>
         </div>
@@ -982,24 +995,27 @@ function _renderTabAtivaEsoc() {
   else if (ESOC_ACTIVE_TAB !== 'criacao_xmls') renderTabelaEsoc();
 }
 
-// Versão simplificada (prototipo v1): só Competência de/até, Empresa, CNPJ
-// Empregador, CPF Colaborador. Os demais campos (busca, leiaute, situação,
-// ordenar por, recibo informado) não existem nesta tela — mantêm o default.
+// Versão simplificada (prototipo v1): Tipo de data (Competência/Data de
+// envio) + Data de/até, Empresa, CNPJ Empregador, CPF Colaborador. Os demais
+// campos (busca, leiaute, situação, ordenar por, recibo informado) não
+// existem nesta tela — mantêm o default.
 function pesquisarEsoc() {
   ESOC_FILTERS.cnpjEmpregador = document.getElementById('flt-cnpj-emp').value.trim();
   ESOC_FILTERS.cpfColaborador = document.getElementById('flt-cpf-colab').value.trim();
-  let de = sdGetValueEsoc('comp-de');
-  let ate = sdGetValueEsoc('comp-ate');
-  // RN-014: quando "Filtrar até" é anterior a "Filtrar de", a interface troca
+  ESOC_FILTERS.tipoData = document.getElementById('flt-tipo-data').value;
+  let de = sdGetValueEsoc('data-de');
+  let ate = sdGetValueEsoc('data-ate');
+  // RN-014: quando "Data até" é anterior a "Data de", a interface troca
   // os dois valores automaticamente (nos próprios campos) antes de filtrar.
   if (de && ate && _ppStrip(de) > _ppStrip(ate)) {
     const tmp = de; de = ate; ate = tmp;
-    _sdEsoc['comp-de'].value = de; sdRenderEsoc('comp-de');
-    _sdEsoc['comp-ate'].value = ate; sdRenderEsoc('comp-ate');
+    _sdEsoc['data-de'].value = de; sdRenderEsoc('data-de');
+    _sdEsoc['data-ate'].value = ate; sdRenderEsoc('data-ate');
   }
-  ESOC_FILTERS.competenciaDe = de;
-  ESOC_FILTERS.competenciaAte = ate;
+  ESOC_FILTERS.dataDe = de;
+  ESOC_FILTERS.dataAte = ate;
   ESOC_FILTERS.empresas = new Set([..._msEsoc['empresa'].selected]);
+  ESOC_FILTERS.origens = new Set([..._msEsoc['origem'].selected]);
   ESOC_SELECTED.clear(); // RN-013: aplicar filtros descarta a seleção.
   renderTabsEsoc();
   _renderTabAtivaEsoc();
@@ -1009,14 +1025,15 @@ function pesquisarEsoc() {
 function limparFiltrosEsoc() {
   document.getElementById('flt-cnpj-emp').value = '';
   document.getElementById('flt-cpf-colab').value = '';
-  // RF-014: "Limpar filtros" restaura o estado padrão dos 5 controles —
-  // Filtrar de = dia 1 do mês atual, Filtrar até = hoje (não vazio).
+  document.getElementById('flt-tipo-data').value = 'competencia';
+  // RF-014: "Limpar filtros" restaura o estado padrão dos 6 controles —
+  // Data de = dia 1 do mês atual, Data até = hoje (não vazio).
   const compMesInicio = new Date(MOCK_TODAY.ano, MOCK_TODAY.mes - 1, 1);
   const compHoje = ppToday();
-  _sdEsoc['comp-de'].value = compMesInicio; sdRenderEsoc('comp-de');
-  _sdEsoc['comp-ate'].value = compHoje; sdRenderEsoc('comp-ate');
+  _sdEsoc['data-de'].value = compMesInicio; sdRenderEsoc('data-de');
+  _sdEsoc['data-ate'].value = compHoje; sdRenderEsoc('data-ate');
   Object.keys(_msEsoc).forEach(id => { _msEsoc[id].selected.clear(); _msEsoc[id].open = false; msRenderEsoc(id); });
-  Object.assign(ESOC_FILTERS, { empresas: new Set(), leiautes: new Set(), situacoes: new Set(), cnpjEmpregador: '', cpfColaborador: '', busca: '', competenciaDe: compMesInicio, competenciaAte: compHoje, ordenarPor: 'status', reciboInformado: 'todos' });
+  Object.assign(ESOC_FILTERS, { empresas: new Set(), leiautes: new Set(), situacoes: new Set(), origens: new Set(), cnpjEmpregador: '', cpfColaborador: '', busca: '', tipoData: 'competencia', dataDe: compMesInicio, dataAte: compHoje, ordenarPor: 'status', reciboInformado: 'todos' });
   ESOC_SELECTED.clear(); // RN-013: aplicar/limpar filtros descarta a seleção.
   renderTabsEsoc();
   _renderTabAtivaEsoc();
@@ -1210,12 +1227,14 @@ function abrirDrawerEsoc(id) {
     <div class="esoc-drawer-block">
       <div class="esoc-drawer-block-title"><i data-lucide="file-text" style="width:13px;height:13px;"></i>Detalhamento da pendência</div>
       <div class="esoc-kv-grid">
-        <div class="esoc-kv"><label>Data/Hora</label><div class="val">D-${ev.diasAtras} · ${esc(ev.hora)}</div></div>
-        <div class="esoc-kv"><label>Leiaute</label><div class="val mono">${esc(ev.leiaute)}</div></div>
+        <div class="esoc-kv"><label>Data/Hora</label><div class="val">${esc(dataHoraCompletaEsoc(ev.diasAtras, ev.hora))}</div></div>
+        <div class="esoc-kv"><label>Competência</label><div class="val">${esc(_fmtCompetenciaEsoc(_ppDaysAgo(ev.diasAtras)))}</div></div>
+        <div class="esoc-kv"><label>Evento</label><div class="val mono">${esc(ev.leiaute)}</div></div>
+        <div class="esoc-kv"><label>Tipo de Envio</label><div class="val">${esc(ev.tipoEnvio)}</div></div>
         <div class="esoc-kv"><label>Situação</label><div class="val">${esc(ev.situacao)}</div></div>
         <div class="esoc-kv"><label>Número do Recibo</label><div class="val mono ${!ev.recibo ? 'empty' : ''}">${ev.recibo ? esc(ev.recibo) : 'Não informado'}</div></div>
-        <div class="esoc-kv"><label>CNPJ Empregador</label><div class="val mono">${esc(emp.cnpj)}</div></div>
-        <div class="esoc-kv"><label>CPF Colaborador</label><div class="val mono ${!col ? 'empty' : ''}">${col ? esc(col.cpf) : 'Não aplicável'}</div></div>
+        <div class="esoc-kv" style="grid-column:1/-1;"><label>Empregador</label><div class="val">${esc(emp.nome)}</div>${empBlocoEsoc(emp)}</div>
+        <div class="esoc-kv"><label>Colaborador</label><div class="val ${!col ? 'empty' : ''}">${col ? `${esc(col.nome)} <span class="mono" style="color:var(--text-tertiary);">(${esc(col.cpf)})</span>` : 'Não aplicável'}</div></div>
         <div class="esoc-kv" style="grid-column:1/-1;"><label>Identificador</label><div class="val mono">${esc(ev.id)}</div></div>
       </div>
       <div class="esoc-kv" style="margin-top:12px;"><label>Retorno</label><div class="val">${esc(ev.retorno || '—')}</div></div>
@@ -1339,9 +1358,16 @@ function initPainelEsocial() {
       <div id="esoc-filters-block" class="section-card" style="margin-bottom:16px;">
         <div class="section-title"><i data-lucide="filter"></i>Filtros</div>
         <div class="esoc-filter-grid">
-          <div class="esoc-field"><label>Filtrar de</label><div class="esoc-pp" id="wrap-comp-de"><div id="sd-comp-de"></div></div></div>
-          <div class="esoc-field"><label>Filtrar até</label><div class="esoc-pp" id="wrap-comp-ate"><div id="sd-comp-ate"></div></div></div>
+          <div class="esoc-field"><label>Tipo de data</label>
+            <select class="esoc-select" id="flt-tipo-data">
+              <option value="competencia">Competência</option>
+              <option value="envio">Data de envio</option>
+            </select>
+          </div>
+          <div class="esoc-field"><label>Data de</label><div class="esoc-pp" id="wrap-data-de"><div id="sd-data-de"></div></div></div>
+          <div class="esoc-field"><label>Data até</label><div class="esoc-pp" id="wrap-data-ate"><div id="sd-data-ate"></div></div></div>
           <div class="esoc-field"><label>Empresa</label><div class="esoc-ms" id="wrap-empresa"><div id="ms-empresa"></div></div></div>
+          <div class="esoc-field"><label>Origem</label><div class="esoc-ms" id="wrap-origem"><div id="ms-origem"></div></div></div>
           <div class="esoc-field"><label>CNPJ Empregador</label><input class="esoc-input" id="flt-cnpj-emp" placeholder="12.ABC.345/01DE-35" maxlength="18" oninput="this.value = this.value.toUpperCase()" /></div>
           <div class="esoc-field"><label>CPF Colaborador</label><input class="esoc-input" id="flt-cpf-colab" placeholder="000.000.000-00" /></div>
         </div>
@@ -1382,14 +1408,14 @@ function initPainelEsocial() {
     </div>`;
   container.appendChild(section);
 
-  // Competência de/até (data avulsa) — padrão: mês atual (MOCK_TODAY), do dia 1 até hoje.
+  // Data de/até (data avulsa) — padrão: mês atual (MOCK_TODAY), do dia 1 até hoje.
   const compMesInicio = new Date(MOCK_TODAY.ano, MOCK_TODAY.mes - 1, 1);
-  sdCreateEsoc('comp-de', compMesInicio);
-  sdCreateEsoc('comp-ate', ppToday());
-  sdRenderEsoc('comp-de');
-  sdRenderEsoc('comp-ate');
-  ESOC_FILTERS.competenciaDe = compMesInicio;
-  ESOC_FILTERS.competenciaAte = ppToday();
+  sdCreateEsoc('data-de', compMesInicio);
+  sdCreateEsoc('data-ate', ppToday());
+  sdRenderEsoc('data-de');
+  sdRenderEsoc('data-ate');
+  ESOC_FILTERS.dataDe = compMesInicio;
+  ESOC_FILTERS.dataAte = ppToday();
 
   // Header do painel dentro da topbar do Cockpit (fica visível/fixo no topo).
   const topbar = document.querySelector('.topbar');
@@ -1401,9 +1427,10 @@ function initPainelEsocial() {
     topbar.insertBefore(titleEl, topbar.firstChild);
   }
 
-  // Dropdown multi-select de Empresa (único que sobrou nesta versão simplificada)
+  // Dropdowns multi-select (Empresa + Origem, nesta versão simplificada)
   msCreateEsoc('empresa', 'Todas as empresas', EMPRESAS_ESOC.map((e, i) => ({ value: String(i), label: e.nome, cnpj: e.cnpj })), new Set());
-  msRenderEsoc('empresa');
+  msCreateEsoc('origem', 'Todas as origens', [...new Set(EMPRESAS_ESOC.map(e => e.origem))].map(o => ({ value: o, label: o })), new Set());
+  msRenderEsoc('empresa'); msRenderEsoc('origem');
 
   garantirOverlaysEsoc();
   renderTabsEsoc();
