@@ -1,5 +1,9 @@
 # Changelog — Painel de Monitoramento eSocial (V1)
 
+## 24/09/2026
+
+- Padronizada a ordem das colunas em todas as tabelas para seguir a mesma ordem usada em Validados: **Status → Empregador/Colaborador → Evento → Competência → Data → Tipo de Envio → Recibo** — os campos que só existem na tabela principal (Situação, Retorno, Resumo) ficam no final.
+
 ## 23/09/2026
 
 - Novo filtro de data: agora dá pra escolher se o período (Data de / Data até) filtra por **Competência** ou por **Data de envio**.
@@ -14,3 +18,4 @@
 - Ajuste visual: o status (badge) não quebra mais linha dentro da célula.
 - Removida a coluna de checkbox de seleção da tabela de eventos.
 - Cabeçalhos da tabela: voltaram a quebrar em até 2 linhas normalmente quando o nome da coluna é grande — trocamos a ideia inicial de cortar com "..." (ficava ilegível) por permitir a quebra de linha, que é mais comum e fácil de ler.
+- Aberta a issue [DP-483](https://linear.app/bhub/issue/DP-483/melhoria-painel-esocial-v1-ajustes-de-campos-e-filtros-conforme) (sub-issue de DP-284) documentando todos esses ajustes para a engenharia.

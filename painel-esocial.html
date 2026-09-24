@@ -109,15 +109,15 @@
 #screen-esocial .dt-table td { word-break: break-word; }
 #screen-esocial .dt-table .badge { white-space: nowrap; }
 #screen-esocial #dt-esoc-eventos .dt-table th:nth-child(1), #screen-esocial #dt-esoc-eventos .dt-table td:nth-child(1) { width: 11%; }
-#screen-esocial #dt-esoc-eventos .dt-table th:nth-child(2), #screen-esocial #dt-esoc-eventos .dt-table td:nth-child(2) { width: 9%; }
-#screen-esocial #dt-esoc-eventos .dt-table th:nth-child(3), #screen-esocial #dt-esoc-eventos .dt-table td:nth-child(3) { width: 7%; }
-#screen-esocial #dt-esoc-eventos .dt-table th:nth-child(4), #screen-esocial #dt-esoc-eventos .dt-table td:nth-child(4) { width: 10%; }
-#screen-esocial #dt-esoc-eventos .dt-table th:nth-child(5), #screen-esocial #dt-esoc-eventos .dt-table td:nth-child(5) { width: 8%; }
-#screen-esocial #dt-esoc-eventos .dt-table th:nth-child(6), #screen-esocial #dt-esoc-eventos .dt-table td:nth-child(6) { width: 9%; }
-#screen-esocial #dt-esoc-eventos .dt-table th:nth-child(7), #screen-esocial #dt-esoc-eventos .dt-table td:nth-child(7) { width: 11%; }
-#screen-esocial #dt-esoc-eventos .dt-table th:nth-child(8), #screen-esocial #dt-esoc-eventos .dt-table td:nth-child(8) { width: 8%; }
-#screen-esocial #dt-esoc-eventos .dt-table th:nth-child(9), #screen-esocial #dt-esoc-eventos .dt-table td:nth-child(9) { width: 12%; }
-#screen-esocial #dt-esoc-eventos .dt-table th:nth-child(10), #screen-esocial #dt-esoc-eventos .dt-table td:nth-child(10) { width: 15%; }
+#screen-esocial #dt-esoc-eventos .dt-table th:nth-child(2), #screen-esocial #dt-esoc-eventos .dt-table td:nth-child(2) { width: 15%; }
+#screen-esocial #dt-esoc-eventos .dt-table th:nth-child(3), #screen-esocial #dt-esoc-eventos .dt-table td:nth-child(3) { width: 9%; }
+#screen-esocial #dt-esoc-eventos .dt-table th:nth-child(4), #screen-esocial #dt-esoc-eventos .dt-table td:nth-child(4) { width: 7%; }
+#screen-esocial #dt-esoc-eventos .dt-table th:nth-child(5), #screen-esocial #dt-esoc-eventos .dt-table td:nth-child(5) { width: 10%; }
+#screen-esocial #dt-esoc-eventos .dt-table th:nth-child(6), #screen-esocial #dt-esoc-eventos .dt-table td:nth-child(6) { width: 8%; }
+#screen-esocial #dt-esoc-eventos .dt-table th:nth-child(7), #screen-esocial #dt-esoc-eventos .dt-table td:nth-child(7) { width: 9%; }
+#screen-esocial #dt-esoc-eventos .dt-table th:nth-child(8), #screen-esocial #dt-esoc-eventos .dt-table td:nth-child(8) { width: 11%; }
+#screen-esocial #dt-esoc-eventos .dt-table th:nth-child(9), #screen-esocial #dt-esoc-eventos .dt-table td:nth-child(9) { width: 8%; }
+#screen-esocial #dt-esoc-eventos .dt-table th:nth-child(10), #screen-esocial #dt-esoc-eventos .dt-table td:nth-child(10) { width: 12%; }
 #screen-esocial #dt-esoc-xml .dt-table th:nth-child(1), #screen-esocial #dt-esoc-xml .dt-table td:nth-child(1) { width: 28%; }
 #screen-esocial #dt-esoc-xml .dt-table th:nth-child(2), #screen-esocial #dt-esoc-xml .dt-table td:nth-child(2) { width: 22%; }
 #screen-esocial #dt-esoc-xml .dt-table th:nth-child(3), #screen-esocial #dt-esoc-xml .dt-table td:nth-child(3) { width: 22%; }
@@ -641,15 +641,15 @@ function switchTabEsoc(tabId) {
 function colunasEsoc() {
   return [
     { key: 'status', label: 'Status', render: (row) => { const m = STATUS_META_ESOC[row.status]; return `<span class="badge badge-${m.badge}">${esc(m.label)}</span>${row.status === 'sucesso_advertencia' ? ' <i data-lucide="alert-triangle" style="width:12px;height:12px;color:var(--warning);vertical-align:-1px;"></i>' : ''}<div class="dt-td-mono" style="font-size:10px;color:var(--text-tertiary);margin-top:3px;">${esc(row.id)}</div>`; } },
-    { key: 'dataHora', label: 'Data/Hora', render: (row) => `<span style="white-space:nowrap;">${esc(dataHoraCompletaEsoc(row.diasAtras, row.hora))}</span>` },
-    { key: 'competencia', label: 'Competência', render: (row) => `<span style="white-space:nowrap;">${esc(_fmtCompetenciaEsoc(_ppDaysAgo(row.diasAtras)))}</span>` },
+    { key: 'contribuinte', label: 'Empregador / Colaborador', render: (row) => { const emp = empEsoc(row.empresa); const c = colabEsoc(row.colab); return `<div style="font-size:11.5px;font-weight:600;">${esc(emp.nome)}</div>${empBlocoEsoc(emp)}${c ? `<div style="font-size:11px;margin-top:3px;">${esc(c.nome)}</div><div class="dt-td-mono" style="font-size:10.5px;color:var(--text-tertiary);">${esc(c.cpf)}</div>` : ''}`; } },
     { key: 'leiaute', label: 'Evento', render: (row) => `<span class="esoc-leiaute-code" title="${esc((LEIAUTES_ESOC[row.leiaute] || {}).desc || '')}">${esc(row.leiaute)}</span><div class="esoc-leiaute-desc">${esc((LEIAUTES_ESOC[row.leiaute] || {}).desc || '')}</div>` },
+    { key: 'competencia', label: 'Competência', render: (row) => `<span style="white-space:nowrap;">${esc(_fmtCompetenciaEsoc(_ppDaysAgo(row.diasAtras)))}</span>` },
+    { key: 'dataHora', label: 'Data/Hora', render: (row) => `<span style="white-space:nowrap;">${esc(dataHoraCompletaEsoc(row.diasAtras, row.hora))}</span>` },
     { key: 'tipoEnvio', label: 'Tipo de Envio', render: (row) => esc(row.tipoEnvio) },
     { key: 'recibo', label: 'Recibo', mono: true, render: (row) => row.recibo ? `<span class="dt-td-mono">${esc(row.recibo)}</span>` : '<span style="color:var(--text-tertiary);">—</span>' },
     { key: 'situacao', label: 'Situação', render: (row) => `<span class="esoc-resumo-cell" title="${esc(row.situacao)}">${esc(row.situacao)}</span>` },
     { key: 'retorno', label: 'Retorno', render: (row) => row.retorno ? `<span class="esoc-retorno-link" onclick="event.stopPropagation(); abrirDrawerEsoc('${row.id}')">Ver detalhes</span>` : '<span style="color:var(--text-tertiary);">—</span>' },
     { key: 'resumo', label: 'Resumo', render: (row) => `<span class="esoc-resumo-cell" title="${esc(row.resumo)}">${esc(row.resumo)}</span>` },
-    { key: 'contribuinte', label: 'Empregador / Colaborador', render: (row) => { const emp = empEsoc(row.empresa); const c = colabEsoc(row.colab); return `<div style="font-size:11.5px;font-weight:600;">${esc(emp.nome)}</div>${empBlocoEsoc(emp)}${c ? `<div style="font-size:11px;margin-top:3px;">${esc(c.nome)}</div><div class="dt-td-mono" style="font-size:10.5px;color:var(--text-tertiary);">${esc(c.cpf)}</div>` : ''}`; } },
   ];
 }
 
